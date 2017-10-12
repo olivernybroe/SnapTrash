@@ -7,4 +7,5 @@
 /build
 /captures
 .externalNativeBuild
-/gradle.properties
+app/libs/
+app/src/main/res/values/configuration.xml
