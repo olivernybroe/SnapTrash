@@ -51,7 +51,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
         googleMap.getUiSettings().setCompassEnabled(false);
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(39.87266,-4.028275))
+                .target(new LatLng(39.87266, -4.028275))
                 .zoom(20)
                 .tilt(67.5f)
                 .bearing(314)
@@ -64,6 +64,10 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         this.onMapReady(mMap);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        this.onLocationChanged(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient));
     }
 
     @Override
