@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash;
+package dk.snaptrash.snaptrash.Utils;
 
 import android.content.Context;
 import android.graphics.Paint;

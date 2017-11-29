@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="dk.snaptrash.snaptrash.LogInFragment">
+    tools:context="dk.snaptrash.snaptrash.login.LogInFragment">
 
 
     <ImageView
@@ -60,7 +60,7 @@
         app:layout_constraintTop_toBottomOf="@id/password"
     />
 
-    <dk.snaptrash.snaptrash.UnderlineTextView
+    <dk.snaptrash.snaptrash.Utils.UnderlineTextView
         android:id="@+id/signUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -71,7 +71,7 @@
         android:text="@string/sign_up_text"
     />
 
-    <dk.snaptrash.snaptrash.UnderlineTextView
+    <dk.snaptrash.snaptrash.Utils.UnderlineTextView
         android:id="@+id/forgotPassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

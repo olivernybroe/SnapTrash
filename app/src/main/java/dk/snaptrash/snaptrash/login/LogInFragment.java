@@ -1,18 +1,23 @@
-package dk.snaptrash.snaptrash;
+package dk.snaptrash.snaptrash.login;
 
 
-import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ProgressBar;
+
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjection;
+import dk.snaptrash.snaptrash.MapActivity;
+import dk.snaptrash.snaptrash.R;
+import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
 
 
 /**
@@ -22,6 +27,8 @@ import android.widget.ProgressBar;
 public class LogInFragment extends Fragment implements View.OnClickListener {
 
     ProgressBar progressBar;
+
+    @Inject AuthProvider auth;
 
     public LogInFragment() {
         // Required empty public constructor
@@ -42,7 +49,9 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
+        Log.e("AUTH", auth.toString());
     }
 
     @Override
@@ -60,22 +69,26 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         progressBar.setVisibility(View.VISIBLE);
 
-        Handler handler = new Handler();
-        Runnable runnable = new Runnable() {
-            private Activity activity;
+        new AsyncTask<String, Void, Boolean>() {
 
-            Runnable setActivity(Activity activity) {
-                this.activity = activity;
-                return this;
+            @Override
+            protected Boolean doInBackground(String... strings) {
+                auth.login(strings[0], strings[1]);
+                return auth.isLoggedIn();
             }
 
-            public void run() {
-                Intent intent = new Intent(activity, MapActivity.class);
+            @Override
+            protected void onPostExecute(Boolean loggedIn) {
                 progressBar.setVisibility(View.INVISIBLE);
-                activity.startActivity(intent);
-            }
-        }.setActivity(this.getActivity());
-        handler.postDelayed(runnable, 1000);
+                if(loggedIn) {
+                    Intent intent = new Intent(getActivity(), MapActivity.class);
+                    getActivity().startActivity(intent);
+                }
+                else {
+                    //TODO: show error message about not being logged in.
+                }
 
+            }
+        }.execute("username", "password");
     }
 }

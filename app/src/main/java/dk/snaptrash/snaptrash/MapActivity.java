@@ -1,7 +1,9 @@
 package dk.snaptrash.snaptrash;
 
 import android.Manifest;
+import android.accounts.AuthenticatorException;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -19,29 +21,73 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.mikepenz.materialdrawer.AccountHeaderBuilder;
+import com.mikepenz.materialdrawer.Drawer;
+import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
+import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
+
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjection;
+import dk.snaptrash.snaptrash.Models.User;
+import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.login.LoginActivity;
 
 public class MapActivity extends Activity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
     private GoogleMap mMap;
 
     public static GoogleApiClient mGoogleApiClient;
     private LocationRequest locationRequest;
+    private Drawer leftSideMenu;
+    @Inject AuthProvider auth;
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        // Create the Google Api Client with access to Games
+        Log.e("AUTH", auth.toString());
+
+        // Create the Google Api Client with location services.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
 
+        try {
+            user = auth.user();
+        } catch (AuthenticatorException e) {
+            Log.e("Authentication", "Not logged in!");
+            Intent intent = new Intent(this, LoginActivity.class);
+            this.startActivity(intent); //TODO add message about not being logged in.
+            return;
+        }
 
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-
         mapFragment.getMapAsync(this);
+
+        leftSideMenu = new DrawerBuilder()
+                .withActivity(this)
+                .addDrawerItems(
+                        new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo),
+                        new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo),
+                        new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo),
+                        new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo),
+                        new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo)
+                )
+                .withAccountHeader(new AccountHeaderBuilder()
+                        .withSelectionListEnabled(false)
+                        .withActivity(this)
+                        .addProfiles(
+                                new ProfileDrawerItem().withName(user.getUsername()).withIcon(R.drawable.menu_account_logo)
+                        )
+                        .build()
+                )
+                .build();
 
     }
 

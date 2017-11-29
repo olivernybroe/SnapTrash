@@ -55,7 +55,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="20dp"
-            android:background="@drawable/gradient_map" />
+            android:background="@drawable/gradient_map"
+            android:id="@+id/view4" />
 
     </RelativeLayout>
 
@@ -67,3 +68,4 @@
         app:layout_constraintGuide_percent="0.3" />
 
 </android.support.constraint.ConstraintLayout>
+
