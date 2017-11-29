@@ -14,8 +14,10 @@
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0">
 
         <ImageView
             android:layout_width="match_parent"
@@ -24,6 +26,7 @@
             android:src="@drawable/sky" />
 
         <View
+            android:id="@+id/view"
             android:layout_width="match_parent"
             android:layout_height="20dp"
             android:layout_alignParentBottom="true"
@@ -66,6 +69,39 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.3" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/sideMenuButtonUpperBound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.45" />
+
+    <android.support.constraint.Guideline
+    android:id="@+id/sideMenuButtonLowerBound"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    app:layout_constraintGuide_percent="0.55" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/sideMenuButtonStartBound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.05" />
+
+    <TextView
+        android:id="@+id/openSideMenuButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        android:background="?android:colorBackground"
+        app:layout_constraintBottom_toBottomOf="@id/sideMenuButtonLowerBound"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/sideMenuButtonStartBound"
+        app:layout_constraintTop_toTopOf="@id/sideMenuButtonUpperBound"
+        />
 
 </android.support.constraint.ConstraintLayout>
 

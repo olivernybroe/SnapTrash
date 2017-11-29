@@ -11,6 +11,7 @@ import dk.snaptrash.snaptrash.Models.User;
 public interface AuthProvider {
 
     User login(String username, String password) throws AuthenticationException;
+    User login() throws AuthenticatorException;
 
     @NonNull AuthProvider logout() throws AuthenticationException;
 

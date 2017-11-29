@@ -1,12 +1,16 @@
 package dk.snaptrash.snaptrash.Models;
 
+import android.util.Log;
+
+import java.util.Collection;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @AllArgsConstructor
-public class User extends Model {
+public class User extends Model<User> {
 
-    @Getter @Setter private String username;
-    @Getter @Setter private String avatar;
+    @Setter @Getter private String username;
+    @Setter @Getter private String avatar;
 }

@@ -5,12 +5,16 @@ import javax.inject.Singleton;
 import dagger.Component;
 import dagger.android.AndroidInjectionModule;
 import dk.snaptrash.snaptrash.Services.Auth.AuthModule;
+import dk.snaptrash.snaptrash.Services.Trash.TrashModule;
+import dk.snaptrash.snaptrash.Services.User.UserModule;
 import dk.snaptrash.snaptrash.SnapTrashApplication;
 
 @Component(modules = {
         ActivityBuilder.class,
         AuthModule.class,
-        AndroidInjectionModule.class
+        TrashModule.class,
+        UserModule.class,
+        AndroidInjectionModule.class,
 })
 @Singleton
 public interface AppComponent {

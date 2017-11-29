@@ -5,43 +5,65 @@ import android.accounts.AuthenticatorException;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.Guideline;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 
+import java.util.Collection;
+
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
+import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
-public class MapActivity extends Activity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+public class MapActivity extends Activity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener {
     private GoogleMap mMap;
 
     public static GoogleApiClient mGoogleApiClient;
     private LocationRequest locationRequest;
     private Drawer leftSideMenu;
+    private TextView leftSideMenuButton;
     @Inject AuthProvider auth;
+    @Inject TrashService trashService;
     private User user;
+
+    public MapActivity() {
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +94,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
 
         leftSideMenu = new DrawerBuilder()
                 .withActivity(this)
+                .withFullscreen(true)
                 .addDrawerItems(
                         new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo),
                         new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo),
@@ -88,7 +111,10 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                         .build()
                 )
                 .build();
+        leftSideMenu.getSlider();
 
+        leftSideMenuButton = findViewById(R.id.openSideMenuButton);
+        leftSideMenuButton.setOnClickListener(this);
     }
 
     @Override
@@ -96,6 +122,9 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
 
         googleMap.getUiSettings().setCompassEnabled(false);
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        googleMap.setMaxZoomPreference(20);
+        googleMap.setMinZoomPreference(20);
+        googleMap.setOnMarkerClickListener(this);
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(39.87266, -4.028275))
                 .zoom(20)
@@ -103,8 +132,36 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                 .bearing(314)
                 .build();
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
         mMap = googleMap;
+
+        drawTrashOnMap(
+                trashService.closeTo(new LatLng(39.87266, -4.028275))
+        );
+
+    }
+
+    private void drawTrashOnMap(Collection<Trash> trashes) {
+        trashes.stream()
+            .map(trash -> new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromBitmap(bitmapFromSvg(R.drawable.trash_icon)))
+                    .position(trash.getLocation())
+            )
+            .forEach(mMap::addMarker);
+    }
+
+    private Bitmap bitmapFromSvg(int svgId) {
+        Drawable drawable = getDrawable(R.drawable.trash_icon);
+
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getMinimumHeight(),
+                Bitmap.Config.ARGB_8888
+        );
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
     @Override
@@ -162,5 +219,17 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
 
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view == leftSideMenuButton) {
+            leftSideMenu.openDrawer();
+        }
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return true;
     }
 }

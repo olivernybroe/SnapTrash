@@ -1,4 +1,6 @@
 package dk.snaptrash.snaptrash.Models;
 
-public class Route extends Model {
+import java.util.Collection;
+
+public class Route extends Model<Route> {
 }
