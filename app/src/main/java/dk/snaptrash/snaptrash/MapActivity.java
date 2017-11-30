@@ -41,6 +41,8 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -48,6 +50,7 @@ import dagger.android.AndroidInjection;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
@@ -61,6 +64,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
     private User user;
+    private TrashMapMap trashMarkerMap;
 
     public MapActivity() {
     }
@@ -113,6 +117,8 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                 .build();
         leftSideMenu.getSlider();
 
+        leftSideMenu.deselect();
+
         leftSideMenuButton = findViewById(R.id.openSideMenuButton);
         leftSideMenuButton.setOnClickListener(this);
     }
@@ -134,19 +140,12 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         mMap = googleMap;
 
-        drawTrashOnMap(
+        trashMarkerMap = new TrashMapMap(
+                mMap,
+                new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(bitmapFromSvg(R.drawable.trash_icon))),
                 trashService.closeTo(new LatLng(39.87266, -4.028275))
         );
 
-    }
-
-    private void drawTrashOnMap(Collection<Trash> trashes) {
-        trashes.stream()
-            .map(trash -> new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromBitmap(bitmapFromSvg(R.drawable.trash_icon)))
-                    .position(trash.getLocation())
-            )
-            .forEach(mMap::addMarker);
     }
 
     private Bitmap bitmapFromSvg(int svgId) {
@@ -218,7 +217,6 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
         mMap.animateCamera(CameraUpdateFactory.newLatLng(
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
-
     }
 
     @Override
@@ -230,6 +228,9 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+        Log.d("MarkerClicked", "CLICKED");
+        Trash trash = trashMarkerMap.remove(marker);
+        trashService.pickUp(trash, null);
         return true;
     }
 }

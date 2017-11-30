@@ -14,13 +14,15 @@ import lombok.Getter;
 
 
 public class Trash extends Model<Trash>{
+    @Getter private String id;
     @Getter private LatLng location;
     @Getter private Picture picture;
     private User author;
     @Getter private String description;
     private String authorId;
 
-    public Trash(LatLng location, Picture picture, String description, String authorId) {
+    public Trash(String id, LatLng location, Picture picture, String description, String authorId) {
+        this.id = id;
         this.location = location;
         this.picture = picture;
         this.description = description;

@@ -1,25 +1,26 @@
 package dk.snaptrash.snaptrash.Services.Trash;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-
-import javax.inject.Inject;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import dk.snaptrash.snaptrash.Models.Trash;
-import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
 
 public class FakeTrashService implements TrashService {
 
     @Override
     public Collection<Trash> closeTo(LatLng location) throws TrashException {
-        return Arrays.asList(
-                new Trash(new LatLng(55.7308, 12.3996), null, "Din mor", "MyAuthorId"),
-                new Trash(new LatLng(55.7303, 12.3996), null, "Din far", "MyAuthorId")
-        );
+        return IntStream.range(-100, 100)
+                .mapToObj( i -> {
+                    Log.e("I", String.valueOf(location.latitude+(i/1000.0)));
+                    return new Trash("id_"+i, new LatLng(location.latitude+(i/10000.0), location.longitude), null, "Din mor", "MyAuthorId");
+                })
+                .collect(Collectors.toList());
     }
 
 
