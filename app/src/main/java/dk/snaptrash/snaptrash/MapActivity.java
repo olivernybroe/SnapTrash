@@ -3,18 +3,16 @@ package dk.snaptrash.snaptrash;
 import android.Manifest;
 import android.accounts.AuthenticatorException;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.constraint.Guideline;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
@@ -28,25 +26,28 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
+import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasFragmentInjector;
+import dk.snaptrash.snaptrash.Menu.ProfileActivity;
+import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
@@ -54,9 +55,11 @@ import dk.snaptrash.snaptrash.Services.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
-public class MapActivity extends Activity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener {
+public class MapActivity extends Activity implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener, Drawer.OnDrawerItemClickListener {
     private GoogleMap mMap;
 
+    @Inject
+    DispatchingAndroidInjector<Fragment> fragmentInjector;
     public static GoogleApiClient mGoogleApiClient;
     private LocationRequest locationRequest;
     private Drawer leftSideMenu;
@@ -65,6 +68,12 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
     @Inject TrashService trashService;
     private User user;
     private TrashMapMap trashMarkerMap;
+
+    private static final int ROUTE = 1;
+    private static final int STORE = 2;
+    private static final int SOCIAL = 3;
+    private static final int SETTINGS = 4;
+    private static final int HELP = 5;
 
     public MapActivity() {
     }
@@ -100,11 +109,11 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                 .withActivity(this)
                 .withFullscreen(true)
                 .addDrawerItems(
-                        new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo),
-                        new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo),
-                        new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo),
-                        new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo),
-                        new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo)
+                        new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo).withIdentifier(ROUTE),
+                        new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo).withIdentifier(STORE),
+                        new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo).withIdentifier(SOCIAL),
+                        new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo).withIdentifier(SETTINGS),
+                        new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP)
                 )
                 .withAccountHeader(new AccountHeaderBuilder()
                         .withSelectionListEnabled(false)
@@ -112,8 +121,10 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
                         .addProfiles(
                                 new ProfileDrawerItem().withName(user.getUsername()).withIcon(R.drawable.menu_account_logo)
                         )
+                        .withOnAccountHeaderProfileImageListener(this)
                         .build()
                 )
+                .withOnDrawerItemClickListener(this)
                 .build();
         leftSideMenu.getSlider();
 
@@ -232,5 +243,37 @@ public class MapActivity extends Activity implements OnMapReadyCallback, GoogleA
         Trash trash = trashMarkerMap.remove(marker);
         trashService.pickUp(trash, null);
         return true;
+    }
+
+    @Override
+    public boolean onProfileImageClick(View view, IProfile profile, boolean current) {
+        Intent intent = new Intent(this, ProfileActivity.class);
+        this.startActivity(intent);
+        return false;
+    }
+
+    @Override
+    public boolean onProfileImageLongClick(View view, IProfile profile, boolean current) {
+        return this.onProfileImageClick(view, profile, current);
+    }
+
+    @Override
+    public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
+        switch ((int) drawerItem.getIdentifier()) {
+            case ROUTE:
+                getFragmentManager().beginTransaction()
+                    .addToBackStack("Route")
+                    .add(R.id.routeView, new RouteFragment())
+                    .commit();
+                break;
+        }
+
+
+        return false;
+    }
+
+    @Override
+    public AndroidInjector<Fragment> fragmentInjector() {
+        return this.fragmentInjector;
     }
 }

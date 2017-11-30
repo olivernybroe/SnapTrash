@@ -18,7 +18,8 @@ public class FakeAuthProvider implements AuthProvider {
 
     @Override
     public User login() throws AuthenticatorException {
-        return this.user = new User("Saved user", "avatar");
+        return this.user();
+        //return this.user = new User("Saved user", "avatar");
     }
 
     @NonNull
