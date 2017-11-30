@@ -16,10 +16,7 @@ public class FakeTrashService implements TrashService {
     @Override
     public Collection<Trash> closeTo(LatLng location) throws TrashException {
         return IntStream.range(-100, 100)
-                .mapToObj( i -> {
-                    Log.e("I", String.valueOf(location.latitude+(i/1000.0)));
-                    return new Trash("id_"+i, new LatLng(location.latitude+(i/10000.0), location.longitude), null, "Din mor", "MyAuthorId");
-                })
+                .mapToObj( i -> new Trash("id_"+i, new LatLng(location.latitude+(i/10000.0), location.longitude), null, "Din mor", "MyAuthorId"))
                 .collect(Collectors.toList());
     }
 
