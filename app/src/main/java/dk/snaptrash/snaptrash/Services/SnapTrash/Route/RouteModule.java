@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash.Services.Route;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Route;
 
 import javax.inject.Singleton;
 

@@ -1,6 +1,4 @@
-package dk.snaptrash.snaptrash.Services.Trash;
-
-import android.provider.MediaStore;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
 import com.google.android.gms.maps.model.LatLng;
 

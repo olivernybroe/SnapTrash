@@ -1,13 +1,11 @@
-package dk.snaptrash.snaptrash.Services.Route;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Route;
 
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import dk.snaptrash.snaptrash.Models.Route;
 

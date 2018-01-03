@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash.Services.User;
+package dk.snaptrash.snaptrash.Services.SnapTrash.User;
 
 import dk.snaptrash.snaptrash.Models.User;
 

@@ -3,12 +3,10 @@ package dk.snaptrash.snaptrash.Menu.Routes;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.ListView;
 
 import javax.inject.Inject;
@@ -16,7 +14,7 @@ import javax.inject.Inject;
 import dagger.android.AndroidInjection;
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
-import dk.snaptrash.snaptrash.Services.Route.RouteService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 
 public class RouteFragment extends Fragment implements AdapterView.OnItemClickListener {
 

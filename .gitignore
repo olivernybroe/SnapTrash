@@ -9,3 +9,7 @@
 .externalNativeBuild
 app/libs/
 app/src/main/res/values/configuration.xml
+app/src/debug/
+app/src/main/res/layout/route/
+src/debug/
+src/main/res/layout/route/

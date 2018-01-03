@@ -1,7 +1,6 @@
 package dk.snaptrash.snaptrash;
 
 import android.Manifest;
-import android.accounts.AuthenticatorException;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
@@ -35,6 +34,7 @@ import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
@@ -50,9 +50,9 @@ import dk.snaptrash.snaptrash.Menu.ProfileActivity;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Models.User;
-import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
-import dk.snaptrash.snaptrash.Services.Trash.TrashMapMap;
-import dk.snaptrash.snaptrash.Services.Trash.TrashService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
 public class MapActivity extends Activity implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener, Drawer.OnDrawerItemClickListener {
@@ -93,9 +93,8 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
                 .addApi(LocationServices.API)
                 .build();
 
-        try {
-            user = auth.user();
-        } catch (AuthenticatorException e) {
+        user = auth.user();
+        if(user == null) {
             Log.e("Authentication", "Not logged in!");
             Intent intent = new Intent(this, LoginActivity.class);
             this.startActivity(intent); //TODO add message about not being logged in.
@@ -112,6 +111,7 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
                         new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo).withIdentifier(ROUTE),
                         new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo).withIdentifier(STORE),
                         new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo).withIdentifier(SOCIAL),
+                        new DividerDrawerItem(),
                         new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo).withIdentifier(SETTINGS),
                         new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP)
                 )
@@ -228,6 +228,8 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
         mMap.animateCamera(CameraUpdateFactory.newLatLng(
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
+        trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
+                .forEach(trashMarkerMap::put);
     }
 
     @Override

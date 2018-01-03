@@ -1,6 +1,5 @@
 package dk.snaptrash.snaptrash.login;
 
-import android.accounts.AuthenticatorException;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,7 +13,7 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
 import dk.snaptrash.snaptrash.MapActivity;
 import dk.snaptrash.snaptrash.R;
-import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 
 public class LoginActivity extends AppCompatActivity implements HasFragmentInjector {
     @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
@@ -26,14 +25,9 @@ public class LoginActivity extends AppCompatActivity implements HasFragmentInjec
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
 
-        try {
-            auth.login();
-            Intent intent = new Intent(this, MapActivity.class);
-            this.startActivity(intent);
-            return;
-        } catch (AuthenticatorException ignored) {
-
-        }
+        auth.login();
+        Intent intent = new Intent(this, MapActivity.class);
+        this.startActivity(intent);
 
         setContentView(R.layout.activity_main);
 

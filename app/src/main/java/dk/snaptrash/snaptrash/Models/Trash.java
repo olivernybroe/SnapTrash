@@ -4,12 +4,9 @@ import android.graphics.Picture;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.Collection;
-
 import javax.inject.Inject;
 
-import dk.snaptrash.snaptrash.Services.User.UserService;
-import lombok.AllArgsConstructor;
+import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 import lombok.Getter;
 
 

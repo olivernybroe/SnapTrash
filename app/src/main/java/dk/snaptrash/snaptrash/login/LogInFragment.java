@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import dagger.android.AndroidInjection;
 import dk.snaptrash.snaptrash.MapActivity;
 import dk.snaptrash.snaptrash.R;
-import dk.snaptrash.snaptrash.Services.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 
 
 /**
@@ -74,7 +74,7 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
             @Override
             protected Boolean doInBackground(String... strings) {
                 auth.login(strings[0], strings[1]);
-                return auth.isLoggedIn();
+                return auth.user() != null;
             }
 
             @Override

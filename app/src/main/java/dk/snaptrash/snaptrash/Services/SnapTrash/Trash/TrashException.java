@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash.Services.Trash;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
 public class TrashException extends RuntimeException {
 }

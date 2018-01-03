@@ -1,11 +1,10 @@
-package dk.snaptrash.snaptrash.Services.Trash;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.HashMap;
-import java.util.Optional;
 
 import dk.snaptrash.snaptrash.Models.Trash;
 
@@ -18,7 +17,7 @@ public class TrashMapMap extends HashMap<Trash, Marker> {
         this.map = map;
         this.markerOptions = markerOptions;
 
-        trashes.forEach(this::put);
+        this.put(trashes);
 
     }
 
@@ -27,6 +26,11 @@ public class TrashMapMap extends HashMap<Trash, Marker> {
                 trash,
                 this.map.addMarker(markerOptions.position(trash.getLocation()))
         );
+    }
+
+    public TrashMapMap put(Iterable<Trash> trashes) {
+        trashes.forEach(this::put);
+        return this;
     }
 
     @Override

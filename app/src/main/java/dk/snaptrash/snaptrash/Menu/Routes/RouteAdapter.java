@@ -5,21 +5,17 @@ import android.content.Context;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
-import javax.inject.Inject;
-
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
-import dk.snaptrash.snaptrash.Services.Route.RouteService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 
 import static dk.snaptrash.snaptrash.MapActivity.mGoogleApiClient;
 

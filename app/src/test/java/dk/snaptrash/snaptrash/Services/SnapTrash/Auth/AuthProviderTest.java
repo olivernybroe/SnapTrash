@@ -1,15 +1,13 @@
-package dk.snaptrash.snaptrash.Services.Auth;
+package dk.snaptrash.snaptrash.Services.SnapTrash.Auth;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 
 import dk.snaptrash.snaptrash.DaggerAppComponent;
 import dk.snaptrash.snaptrash.Models.User;
 
-import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class AuthProviderTest {
