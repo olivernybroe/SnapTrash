@@ -7,6 +7,8 @@ import dagger.Provides;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.FakeAuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.FirebaseRouteService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.FirebaseAuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.FakeRouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.FirebaseTrashService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
@@ -14,13 +16,12 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.User.FirebaseUserService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 
 @Module
-public class FirebaseSnapTrashModule{
+public class FirebaseSnapTrashModule implements SnapTrashModule {
 
     @Singleton
     @Provides
     public AuthProvider provideAuthProvider() {
-        //return new FirebaseAuthProvider();
-        return new FakeAuthProvider();
+        return new FirebaseAuthProvider();
     }
 
     @Singleton
@@ -40,6 +41,4 @@ public class FirebaseSnapTrashModule{
     public RouteService provideRouteService() {
         return new FirebaseRouteService();
     }
-
-
 }
