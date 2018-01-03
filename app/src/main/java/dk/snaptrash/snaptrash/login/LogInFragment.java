@@ -28,7 +28,7 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
  * Use the {@link LogInFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LogInFragment extends Fragment implements View.OnClickListener, OnCompleteListener<User> {
+public class LogInFragment extends Fragment implements View.OnClickListener{
 
     ProgressBar progressBar;
 
@@ -55,8 +55,6 @@ public class LogInFragment extends Fragment implements View.OnClickListener, OnC
     public void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
-
-        Log.e("AUTH", auth.toString());
     }
 
     @Override
@@ -73,17 +71,18 @@ public class LogInFragment extends Fragment implements View.OnClickListener, OnC
     @Override
     public void onClick(View view) {
         progressBar.setVisibility(View.VISIBLE);
-
-        auth.login("username", "password");
+        Task<User> savedLogIn = this.auth.login("iohan@lost-world.dk", "fraekfyr69");
+        savedLogIn.addOnSuccessListener(
+            user -> {
+                Intent intent = new Intent(this.getActivity(), MapActivity.class);
+                this.startActivity(intent);
+            }
+        ).addOnFailureListener(
+            e -> {
+                progressBar.setVisibility(View.INVISIBLE);
+                Log.e("auth", "pls", e);
+            }
+        );
     }
 
-    @Override
-    public void onComplete(@NonNull Task<User> task) {
-        if(task.isSuccessful()) {
-            this.auth.removeOnLoginListener(this);
-        }
-        else {
-            this.getActivity().runOnUiThread(() -> progressBar.setVisibility(View.INVISIBLE));
-        }
-    }
 }

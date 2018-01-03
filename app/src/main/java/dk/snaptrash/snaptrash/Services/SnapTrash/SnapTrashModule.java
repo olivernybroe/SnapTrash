@@ -7,7 +7,9 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 
+@Module
 public interface SnapTrashModule {
+
     AuthProvider provideAuthProvider();
 
     UserService provideUserService();

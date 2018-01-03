@@ -4,21 +4,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import dk.snaptrash.snaptrash.Models.User;
 
 public class FirebaseAuthProvider implements AuthProvider {
-    private List<OnLoginListener> loginListeners = Collections.synchronizedList(new ArrayList<>());
-    private List<OnLogoutListener> logoutListeners = Collections.synchronizedList(new ArrayList<>());
-
 
     private FirebaseAuth auth;
 
@@ -26,25 +20,34 @@ public class FirebaseAuthProvider implements AuthProvider {
         this.auth = FirebaseAuth.getInstance();
     }
 
+    @NonNull
     @Override
-    public AuthProvider login(String username, String password) {
-        return null;
+    public Task<User> login(String email, String password) {
+        return auth.signInWithEmailAndPassword(email, password).continueWith(
+            task -> FirebaseAuthProvider.toUser(task.getResult())
+        );
+
     }
 
+    @NonNull
     @Override
-    public AuthProvider login(GoogleSignInAccount account) {
-        return null;
-    }
-
-    @Override
-    public AuthProvider login() {
+    public Task<User> login(GoogleSignInAccount account) {
         return null;
     }
 
     @NonNull
     @Override
-    public AuthProvider logout() {
-        return null;
+    public Task<User> login() {
+        return Tasks.forException(new Exception());
+    }
+
+    @NonNull
+    @Override
+    public Task<Void> logout() {
+        return Tasks.call(() -> {
+            auth.signOut();
+            return null;
+        });
     }
 
     @Nullable
@@ -53,26 +56,12 @@ public class FirebaseAuthProvider implements AuthProvider {
         return auth.getCurrentUser() != null ? toUser(auth.getCurrentUser()) : null;
     }
 
-    @Override
-    public AuthProvider addOnLoginListener(OnLoginListener completeListener) {
-        this.loginListeners.add(completeListener);
-        return this;
-    }
-
-    @Override
-    public AuthProvider removeOnLoginListener(OnLoginListener completeListener) {
-        this.loginListeners.remove(completeListener);
-        return this;
-    }
-
-    @Override
-    public AuthProvider addOnLogoutListener(OnLogoutListener completeListener) {
-        this.logoutListeners.add(completeListener);
-        return this;
-    }
-
     private static User toUser(@NonNull FirebaseUser user) {
         return new User(user.getEmail(), user.getDisplayName(), "photo");
+    }
+
+    private static User toUser(@NonNull AuthResult result) {
+        return FirebaseAuthProvider.toUser(result.getUser());
     }
 
 }

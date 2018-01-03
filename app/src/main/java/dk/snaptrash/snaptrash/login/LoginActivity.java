@@ -8,6 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import javax.inject.Inject;
@@ -30,15 +32,25 @@ public class LoginActivity extends AppCompatActivity implements HasFragmentInjec
     protected void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
-        auth.addOnLoginListener(this);
 
-        auth.login();
+        this.setContentView(R.layout.activity_main);
 
-        setContentView(R.layout.activity_main);
+        this.getFragmentManager().beginTransaction()
+            .add(R.id.screenView, SplashScreenFragment.newInstance())
+            .commit();
 
-        getFragmentManager().beginTransaction()
-                .add(R.id.screenView, LogInFragment.newInstance())
-                .commit();
+        Task<User> savedLogIn = this.auth.login();
+        savedLogIn.addOnSuccessListener(
+            user -> {
+                Intent intent = new Intent(this, MapActivity.class);
+                this.startActivity(intent);
+            }
+        ).addOnFailureListener(
+            e -> this.getFragmentManager().beginTransaction()
+                .replace(R.id.screenView, LogInFragment.newInstance())
+                .commit()
+        );
+
     }
 
     @Override
@@ -46,15 +58,4 @@ public class LoginActivity extends AppCompatActivity implements HasFragmentInjec
         return fragmentInjector;
     }
 
-    @Override
-    public void onComplete(@NonNull Task<User> task) {
-        if (task.isSuccessful()) {
-            Intent intent = new Intent(this, MapActivity.class);
-            this.auth.removeOnLoginListener(this);
-            this.startActivity(intent);
-        }
-        else {
-            Log.e("AUTH", "FAILED LOGIN");
-        }
-    }
 }

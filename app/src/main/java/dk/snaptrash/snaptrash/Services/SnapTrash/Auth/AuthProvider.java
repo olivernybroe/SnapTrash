@@ -5,6 +5,9 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import java.util.Optional;
 
 import javax.inject.Singleton;
 
@@ -13,17 +16,12 @@ import dk.snaptrash.snaptrash.Models.User;
 @Singleton
 public interface AuthProvider {
 
-    AuthProvider login(String username, String password);
-    AuthProvider login(GoogleSignInAccount account);
-    AuthProvider login();
+    @NonNull Task<User> login(String email, String password);
+    @NonNull Task<User> login(GoogleSignInAccount account);
+    @NonNull Task<User> login();
 
-    @NonNull AuthProvider logout();
+    @NonNull Task<Void> logout();
 
     @Nullable User user();
 
-    AuthProvider addOnLoginListener(OnLoginListener completeListener);
-
-    AuthProvider removeOnLoginListener(OnLoginListener completeListener);
-
-    AuthProvider addOnLogoutListener(OnLogoutListener completeListener);
 }
