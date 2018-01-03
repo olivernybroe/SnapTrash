@@ -24,4 +24,6 @@ public interface AuthProvider {
 
     @Nullable User user();
 
+    void addUserInvalidatedListener(@NonNull UserInvalidatedListener userInvalidatedListener);
+
 }

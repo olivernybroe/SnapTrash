@@ -55,11 +55,18 @@ import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
-public class MapActivity extends Activity implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener, GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener, Drawer.OnDrawerItemClickListener {
+public class MapActivity
+    extends Activity
+    implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+    GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
+    GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
+    Drawer.OnDrawerItemClickListener, UserInvalidatedListener
+{
     private GoogleMap mMap;
 
     @Inject
@@ -88,14 +95,16 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
+        this.auth.addUserInvalidatedListener(this);
+
         Log.e("AUTH", auth.toString());
 
         // Create the Google Api Client with location services.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+            .addConnectionCallbacks(this)
+            .addOnConnectionFailedListener(this)
+            .addApi(LocationServices.API)
+            .build();
 
         user = auth.user();
         if(user == null) {
@@ -147,11 +156,11 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
         googleMap.setMinZoomPreference(20);
         googleMap.setOnMarkerClickListener(this);
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(39.87266, -4.028275))
-                .zoom(20)
-                .tilt(67.5f)
-                .bearing(314)
-                .build();
+            .target(new LatLng(39.87266, -4.028275))
+            .zoom(20)
+            .tilt(67.5f)
+            .bearing(314)
+            .build();
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         mMap = googleMap;
 
@@ -253,13 +262,17 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
                     .commit();
                 break;
         }
-
-
         return false;
     }
 
     @Override
     public AndroidInjector<Fragment> fragmentInjector() {
         return this.fragmentInjector;
+    }
+
+    @Override
+    public void userInvalidated() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        this.startActivity(intent);
     }
 }
