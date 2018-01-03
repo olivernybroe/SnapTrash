@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.EventListener;
 
 import java.io.File;
 import java.util.Collection;
@@ -17,5 +18,8 @@ public interface TrashService {
 
     @NonNull Task<Collection<Trash>> closeTo(@NonNull LatLng location);
     @NonNull Task<Void> pickUp(@NonNull Trash trash,@NonNull File pickUpVideo);
+
+    @NonNull
+    FirebaseTrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener);
 
 }

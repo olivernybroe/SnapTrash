@@ -30,6 +30,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
@@ -39,6 +41,8 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
+
+import java.util.Collection;
 
 import javax.inject.Inject;
 
@@ -151,27 +155,7 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         mMap = googleMap;
 
-        trashMarkerMap = new TrashMapMap(
-                mMap,
-                new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(bitmapFromSvg(R.drawable.trash_icon))),
-                trashService.closeTo(new LatLng(39.87266, -4.028275))
-        );
-
-    }
-
-    private Bitmap bitmapFromSvg(int svgId) {
-        Drawable drawable = getDrawable(R.drawable.trash_icon);
-
-        Bitmap bitmap = Bitmap.createBitmap(
-                drawable.getIntrinsicWidth(),
-                drawable.getMinimumHeight(),
-                Bitmap.Config.ARGB_8888
-        );
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
+        trashMarkerMap = new TrashMapMap(trashService, mMap, getDrawable(R.drawable.trash_icon));
     }
 
     @Override
@@ -229,7 +213,7 @@ public class MapActivity extends Activity implements HasFragmentInjector, OnMapR
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
         trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
-                .forEach(trashMarkerMap::put);
+                .addOnCompleteListener(task -> task.getResult().forEach(trashMarkerMap::put));
     }
 
     @Override

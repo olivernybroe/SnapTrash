@@ -12,6 +12,10 @@ import android.widget.ArrayAdapter;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import java.util.Collection;
 
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
@@ -30,7 +34,9 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         @SuppressLint("MissingPermission")
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
-        this.addAll(routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())));
+        routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())).addOnCompleteListener(task -> {
+            this.addAll(task.getResult());
+        });
     }
 
     @NonNull

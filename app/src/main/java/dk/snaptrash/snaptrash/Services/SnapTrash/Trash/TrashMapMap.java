@@ -1,6 +1,11 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -11,14 +16,30 @@ import dk.snaptrash.snaptrash.Models.Trash;
 public class TrashMapMap extends HashMap<Trash, Marker> {
     private GoogleMap map;
     private MarkerOptions markerOptions;
+    private TrashService trashService;
 
-    public TrashMapMap(GoogleMap map, MarkerOptions markerOptions, Iterable<Trash> trashes) {
+
+    public TrashMapMap(TrashService trashService, GoogleMap map, Drawable drawable) {
         super();
+        this.trashService = trashService;
         this.map = map;
-        this.markerOptions = markerOptions;
+        this.markerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(bitmapFromSvg(drawable)));
 
-        this.put(trashes);
+        trashService.addTrashChangeListener((trashes, e) -> this.put(trashes));
+    }
 
+    private Bitmap bitmapFromSvg(Drawable drawable) {
+
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getMinimumHeight(),
+                Bitmap.Config.ARGB_8888
+        );
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
     public Marker put(Trash trash) {
