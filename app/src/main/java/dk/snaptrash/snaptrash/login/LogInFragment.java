@@ -12,10 +12,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
 import dk.snaptrash.snaptrash.MapActivity;
+import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 
@@ -24,7 +28,7 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
  * Use the {@link LogInFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LogInFragment extends Fragment implements View.OnClickListener {
+public class LogInFragment extends Fragment implements View.OnClickListener, OnCompleteListener<User> {
 
     ProgressBar progressBar;
 
@@ -51,6 +55,7 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
+
         Log.e("AUTH", auth.toString());
     }
 
@@ -69,26 +74,16 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         progressBar.setVisibility(View.VISIBLE);
 
-        new AsyncTask<String, Void, Boolean>() {
+        auth.login("username", "password");
+    }
 
-            @Override
-            protected Boolean doInBackground(String... strings) {
-                auth.login(strings[0], strings[1]);
-                return auth.user() != null;
-            }
-
-            @Override
-            protected void onPostExecute(Boolean loggedIn) {
-                progressBar.setVisibility(View.INVISIBLE);
-                if(loggedIn) {
-                    Intent intent = new Intent(getActivity(), MapActivity.class);
-                    getActivity().startActivity(intent);
-                }
-                else {
-                    //TODO: show error message about not being logged in.
-                }
-
-            }
-        }.execute("username", "password");
+    @Override
+    public void onComplete(@NonNull Task<User> task) {
+        if(task.isSuccessful()) {
+            this.auth.removeOnLoginListener(this);
+        }
+        else {
+            this.getActivity().runOnUiThread(() -> progressBar.setVisibility(View.INVISIBLE));
+        }
     }
 }

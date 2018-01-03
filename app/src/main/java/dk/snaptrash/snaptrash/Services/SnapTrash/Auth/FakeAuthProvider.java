@@ -37,12 +37,18 @@ public class FakeAuthProvider implements AuthProvider {
     }
 
     @Override
-    public AuthProvider addOnLoginListener(OnCompleteListener<User> completeListener) {
-        return this;
+    public AuthProvider addOnLoginListener(OnLoginListener completeListener) {
+        return null;
     }
 
     @Override
-    public AuthProvider addOnLogoutListener(OnCompleteListener<User> completeListener) {
-        return this;
+    public AuthProvider removeOnLoginListener(OnLoginListener completeListener) {
+        return null;
     }
+
+    @Override
+    public AuthProvider addOnLogoutListener(OnLogoutListener completeListener) {
+        return null;
+    }
+
 }

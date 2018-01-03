@@ -5,16 +5,20 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import dk.snaptrash.snaptrash.Models.User;
 
 public class FirebaseAuthProvider implements AuthProvider {
-    private ArrayList<OnCompleteListener<User>> loginListeners = new ArrayList<>();
-    private ArrayList<OnCompleteListener<User>> logoutListeners = new ArrayList<>();
+    private List<OnLoginListener> loginListeners = Collections.synchronizedList(new ArrayList<>());
+    private List<OnLogoutListener> logoutListeners = Collections.synchronizedList(new ArrayList<>());
+
 
     private FirebaseAuth auth;
 
@@ -49,19 +53,26 @@ public class FirebaseAuthProvider implements AuthProvider {
         return auth.getCurrentUser() != null ? toUser(auth.getCurrentUser()) : null;
     }
 
-    private static User toUser(@NonNull FirebaseUser user) {
-        return new User(user.getEmail(), user.getDisplayName(), "photo");
-    }
-
     @Override
-    public AuthProvider addOnLoginListener(OnCompleteListener<User> completeListener) {
+    public AuthProvider addOnLoginListener(OnLoginListener completeListener) {
         this.loginListeners.add(completeListener);
         return this;
     }
 
     @Override
-    public AuthProvider addOnLogoutListener(OnCompleteListener<User> completeListener) {
+    public AuthProvider removeOnLoginListener(OnLoginListener completeListener) {
+        this.loginListeners.remove(completeListener);
+        return this;
+    }
+
+    @Override
+    public AuthProvider addOnLogoutListener(OnLogoutListener completeListener) {
         this.logoutListeners.add(completeListener);
         return this;
     }
+
+    private static User toUser(@NonNull FirebaseUser user) {
+        return new User(user.getEmail(), user.getDisplayName(), "photo");
+    }
+
 }

@@ -21,7 +21,9 @@ public interface AuthProvider {
 
     @Nullable User user();
 
-    AuthProvider addOnLoginListener(OnCompleteListener<User> completeListener);
+    AuthProvider addOnLoginListener(OnLoginListener completeListener);
 
-    AuthProvider addOnLogoutListener(OnCompleteListener<User> completeListener);
+    AuthProvider removeOnLoginListener(OnLoginListener completeListener);
+
+    AuthProvider addOnLogoutListener(OnLogoutListener completeListener);
 }
