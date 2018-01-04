@@ -70,6 +70,14 @@ public class TrashMapMap extends HashMap<Trash, Marker> {
                 .orElse(null);
     }
 
+    public Trash getTrash(Marker marker) {
+        return this.entrySet().stream()
+                .filter(markerTrashEntry -> markerTrashEntry.getValue().equals(marker))
+                .findAny()
+                .map(Entry::getKey)
+                .orElse(null);
+    }
+
     public Marker remove(Trash trash) {
         Marker marker = super.remove(trash);
         if(marker == null) {

@@ -1,23 +1,28 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import dk.snaptrash.snaptrash.Models.Trash;
@@ -26,16 +31,21 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     private List<EventListener<Collection<Trash>>> eventListeners = Collections.synchronizedList(new ArrayList<>());
 
     public FirebaseTrashService() {
-        FirebaseFirestore.getInstance().collection("trashes").addSnapshotListener(this);
+        trashCollection().addSnapshotListener(this);
+    }
+
+    public CollectionReference trashCollection() {
+        return FirebaseFirestore.getInstance().collection("trashes");
     }
 
     @NonNull
     @Override
     public Task<Collection<Trash>> closeTo(@NonNull LatLng location) {
-        return FirebaseFirestore.getInstance().collection("trashes")
+        return trashCollection()
             .get().continueWith(task ->
                 task.getResult().getDocuments().stream()
                     .map(this::toTrash)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList())
         );
     }
@@ -46,8 +56,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return this;
     }
 
-    @NonNull
+    @Nullable
     private Trash toTrash(DocumentSnapshot documentSnapshot) {
+        if(documentSnapshot.getGeoPoint("location") == null) {
+            return null;
+        }
         return new Trash(
                 documentSnapshot.getId(),
                 this.toLatLng(documentSnapshot.getGeoPoint("location")),
@@ -61,7 +74,8 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return new GeoPoint(latLng.latitude, latLng.longitude);
     }
 
-    LatLng toLatLng(GeoPoint geoPoint) {
+    @NonNull
+    private LatLng toLatLng(GeoPoint geoPoint) {
         return new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
     }
 
@@ -73,9 +87,12 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @Override
     public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException e) {
+        if(documentSnapshots == null) {
+            return;
+        }
         Log.e("TRASH", "TRASH CHANGE!");
         eventListeners.forEach(eventListener -> eventListener.onEvent(
-                documentSnapshots.getDocuments().stream().map(this::toTrash).collect(Collectors.toList()),
+                documentSnapshots.getDocuments().stream().map(this::toTrash).filter(Objects::nonNull).collect(Collectors.toList()),
                 e
         ));
     }

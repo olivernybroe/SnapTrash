@@ -69,7 +69,7 @@ public class LogInFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View view) {
         progressBar.setVisibility(View.VISIBLE);
-        Task<User> savedLogIn = this.auth.login("iohan@lost-world.dk", "fraekfyr69");
+        Task<User> savedLogIn = this.auth.login("trueiohan@lost-worl.dk", "frækfyr69");
         savedLogIn.addOnSuccessListener(
             user -> {
                 Intent intent = new Intent(this.getActivity(), MapActivity.class);

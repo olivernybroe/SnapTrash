@@ -31,6 +31,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -222,7 +223,13 @@ public class MapActivity
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
         trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
-                .addOnCompleteListener(task -> task.getResult().forEach(trashMarkerMap::put));
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e("BROKEN?", "NOPE", e);
+                    }
+                })
+                .addOnSuccessListener(trashes -> trashes.forEach(trashMarkerMap::put));
     }
 
     @Override
