@@ -1,7 +1,6 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash;
 
 import dagger.Module;
-import dagger.Provides;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;

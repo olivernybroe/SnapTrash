@@ -42,7 +42,7 @@ public class AuthProviderTest {
         authProvider.logout();
 
         assertThat(authProvider.isLoggedIn()).isFalse();
-        assertThat(authProvider.user()).isNull();
+        assertThat(authProvider.getUser()).isNull();
         */
     }
 

@@ -5,9 +5,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -25,15 +22,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
@@ -44,9 +35,6 @@ import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
-import java.util.Collection;
-import java.util.function.BiConsumer;
-
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
@@ -55,8 +43,6 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
 import dk.snaptrash.snaptrash.Menu.ProfileActivity;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
-import dk.snaptrash.snaptrash.Models.Trash;
-import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
@@ -80,7 +66,6 @@ public class MapActivity
     private TextView leftSideMenuButton;
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
-    private User user;
     private TrashMapMap trashMarkerMap;
 
     private static final int ROUTE = 1;
@@ -88,6 +73,7 @@ public class MapActivity
     private static final int SOCIAL = 3;
     private static final int SETTINGS = 4;
     private static final int HELP = 5;
+    private static final int SIGN_OUT = 6;
 
     public MapActivity() {
     }
@@ -98,8 +84,6 @@ public class MapActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        this.auth.addUserInvalidatedListener(this);
-
         Log.e("AUTH", auth.toString());
 
         // Create the Google Api Client with location services.
@@ -109,45 +93,49 @@ public class MapActivity
             .addApi(LocationServices.API)
             .build();
 
-        user = auth.user();
-        if(user == null) {
+        if(!this.auth.loggedIn()) {
             Log.e("Authentication", "Not logged in!");
             Intent intent = new Intent(this, LoginActivity.class);
-            this.startActivity(intent); //TODO add message about not being logged in.
+            Bundle extras = new Bundle();
+            extras.putString(LoginActivity.loginReasonArgument, getString(R.string.SessionExpired));
+            this.startActivity(intent);
             return;
         }
 
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        leftSideMenu = new DrawerBuilder()
+        this.leftSideMenu = new DrawerBuilder()
+            .withActivity(this)
+            .withFullscreen(true)
+            .addDrawerItems(
+                new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo).withIdentifier(ROUTE),
+                new PrimaryDrawerItem().withName(R.string.menu_sign_out_title).withIcon(R.drawable.menu_routes_logo).withIdentifier(SIGN_OUT),
+                new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo).withIdentifier(STORE),
+                new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo).withIdentifier(SOCIAL),
+                new DividerDrawerItem(),
+                new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo).withIdentifier(SETTINGS),
+                new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP)
+            )
+            .withAccountHeader(new AccountHeaderBuilder()
+                .withSelectionListEnabled(false)
                 .withActivity(this)
-                .withFullscreen(true)
-                .addDrawerItems(
-                        new PrimaryDrawerItem().withName(R.string.menu_routes_title).withIcon(R.drawable.menu_routes_logo).withIdentifier(ROUTE),
-                        new PrimaryDrawerItem().withName(R.string.menu_store_title).withIcon(R.drawable.menu_store_logo).withIdentifier(STORE),
-                        new PrimaryDrawerItem().withName(R.string.menu_social_title).withIcon(R.drawable.menu_social_logo).withIdentifier(SOCIAL),
-                        new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo).withIdentifier(SETTINGS),
-                        new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP)
+                .addProfiles(
+                    new ProfileDrawerItem()
+                        .withName(this.auth.getUser().getEmail())
+                        .withIcon(R.drawable.menu_account_logo)
                 )
-                .withAccountHeader(new AccountHeaderBuilder()
-                        .withSelectionListEnabled(false)
-                        .withActivity(this)
-                        .addProfiles(
-                                new ProfileDrawerItem().withName(user.getUsername()).withIcon(R.drawable.menu_account_logo)
-                        )
-                        .withOnAccountHeaderProfileImageListener(this)
-                        .build()
-                )
-                .withOnDrawerItemClickListener(this)
-                .build();
-        leftSideMenu.getSlider();
+                .withOnAccountHeaderProfileImageListener(this)
+                .build()
+            )
+            .withOnDrawerItemClickListener(this)
+            .build();
+        this.leftSideMenu.getSlider();
 
-        leftSideMenu.deselect();
+        this.leftSideMenu.deselect();
 
-        leftSideMenuButton = findViewById(R.id.openSideMenuButton);
-        leftSideMenuButton.setOnClickListener(this);
+        this.leftSideMenuButton = findViewById(R.id.openSideMenuButton);
+        this.leftSideMenuButton.setOnClickListener(this);
     }
 
     @Override
@@ -280,6 +268,11 @@ public class MapActivity
                     .add(R.id.routeView, new RouteFragment())
                     .commit();
                 break;
+            case SIGN_OUT:
+                this.auth.signOut();
+                this.startActivity(
+                    new Intent(this, LoginActivity.class)
+                );
         }
         return false;
     }
