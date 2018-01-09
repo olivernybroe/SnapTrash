@@ -64,6 +64,7 @@ dependencies {
     compile "com.google.dagger:dagger-android-support:${versions.daggerLib}"
     // if you use the support libraries
     annotationProcessor "com.google.dagger:dagger-android-processor:${versions.daggerLib}"
+    compile 'com.squareup.okhttp3:okhttp:3.9.1'
 }
 
 

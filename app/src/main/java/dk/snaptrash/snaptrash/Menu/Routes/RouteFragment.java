@@ -32,7 +32,7 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
         View view = inflater.inflate(R.layout.fragment_route, container, false);
 
         ListView listView = view.findViewById(R.id.routeAdapterView);
-        listView.setAdapter(new RouteAdapter(view.getContext(), routeService));
+        listView.setAdapter(new RouteAdapter(this.getActivity(), routeService));
         listView.setOnItemClickListener(this);
 
         return view;

@@ -6,15 +6,17 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import dk.snaptrash.snaptrash.Models.Route;
 
 public interface RouteService {
 
-    @NonNull Task<Collection<Route>> getRoutes(LatLng position);
+    @NonNull
+    CompletableFuture<Collection<Route>> getRoutes(LatLng position);
 
-    @NonNull Task<Route> getCurrentRoute();
+    @NonNull CompletableFuture<Route> getCurrentRoute();
 
-    @NonNull Task<Void> selectRoute(Route route);
+    @NonNull CompletableFuture<Route> selectRoute(Route route);
 
 }

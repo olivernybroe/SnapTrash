@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -44,6 +45,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
 import java.util.Collection;
+import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 
@@ -223,13 +225,14 @@ public class MapActivity
                 new LatLng(location.getLatitude(), location.getLongitude())
         ));
         trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("BROKEN?", "NOPE", e);
-                    }
-                })
-                .addOnSuccessListener(trashes -> trashes.forEach(trashMarkerMap::put));
+            .whenComplete((trashes, throwable) -> {
+                if(throwable == null) {
+                    runOnUiThread(() -> trashes.forEach(trashMarkerMap::put));
+                }
+                else {
+                    Log.e("BROKEN?", "NOPE", throwable);
+                }
+            });
     }
 
     @Override
@@ -241,9 +244,18 @@ public class MapActivity
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+
         Log.d("MarkerClicked", "CLICKED");
-        Trash trash = trashMarkerMap.remove(marker);
-        trashService.pickUp(trash, null);
+        marker.setVisible(false);
+        trashService.pickUp(trashMarkerMap.getTrash(marker), null)
+            .whenComplete((trash, throwable) -> {
+                if(throwable == null) {
+                    runOnUiThread(() -> trashMarkerMap.remove(marker));
+                }
+                else {
+                    Log.e("BROKEN?", "NOPE", throwable);
+                }
+            });
         return true;
     }
 

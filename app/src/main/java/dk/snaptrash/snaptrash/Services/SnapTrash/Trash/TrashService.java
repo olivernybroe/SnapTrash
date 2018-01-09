@@ -8,6 +8,7 @@ import com.google.firebase.firestore.EventListener;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Singleton;
 
@@ -16,8 +17,9 @@ import dk.snaptrash.snaptrash.Models.Trash;
 @Singleton
 public interface TrashService {
 
-    @NonNull Task<Collection<Trash>> closeTo(@NonNull LatLng location);
-    @NonNull Task<Void> pickUp(@NonNull Trash trash,@NonNull File pickUpVideo);
+    @NonNull
+    CompletableFuture<Collection<Trash>> closeTo(@NonNull LatLng location);
+    @NonNull CompletableFuture<Trash> pickUp(@NonNull Trash trash,@NonNull File pickUpVideo);
 
     @NonNull
     FirebaseTrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener);
