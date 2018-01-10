@@ -40,7 +40,6 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         LocationServices.getFusedLocationProviderClient(activity).getLastLocation().addOnSuccessListener(location ->
             routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())).whenComplete((routes, throwable) -> {
                 if (throwable == null) {
-                    Log.e("RouteAdapter", routes.toString());
                     activity.runOnUiThread(() -> this.addAll(routes));
                 }
                 else {
