@@ -111,7 +111,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             return Optional.of(new Trash(
                 jsonObject.getString("id"),
                 new LatLng(location.getDouble("latitude"), location.getDouble("longitude")),
-                null,
+                jsonObject.optString("pictureUrl", null),
                 data.optString("description"),
                 null
             ));
@@ -129,7 +129,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return Optional.of(new Trash(
             documentSnapshot.getId(),
             this.toLatLng(documentSnapshot.getGeoPoint("location")),
-            null,
+            documentSnapshot.getString("pictureUrl"),
             documentSnapshot.getString("description"),
             documentSnapshot.getString("authorId")
         ));
