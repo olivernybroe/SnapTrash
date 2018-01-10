@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="dialog_title_size">20sp</dimen>
+    <dimen name="dialog_margin_start">24dp</dimen>
+    <dimen name="dialog_margin_end">24dp</dimen>
+    <dimen name="dialog_margin_between_title_body">20dp</dimen>
+    <dimen name="dialog_margin_bottom">24dp</dimen>
+    <dimen name="dialog_margin_top">24dp</dimen>
+    <dimen name="dialog_title_height">28dp</dimen>
+    <dimen name="dialog_body_padding_bottom">8dp</dimen>
+</resources>

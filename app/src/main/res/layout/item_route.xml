@@ -2,34 +2,47 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="56dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
     <ImageView
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:id="@+id/imageView"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="56dp"
         app:layout_constraintStart_toStartOf="parent"
         android:src="@drawable/route_thumb_nail"
         />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Route name placeholder"
-        app:layout_constraintStart_toStartOf="@+id/textView2"
-        app:layout_constraintTop_toTopOf="@id/imageView" />
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_marginStart="8dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Length: 20km  Approx: 40 minutes"
-        app:layout_constraintTop_toBottomOf="@id/textView"
+    <LinearLayout
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         app:layout_constraintStart_toEndOf="@id/imageView"
-        />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="16dp"
+        app:layout_constraintHorizontal_bias="0"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Route name placeholder"
+          />
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Length: 20km  Approx: 40 minutes"
+            />
+
+    </LinearLayout>
+
 
 
 </android.support.constraint.ConstraintLayout>
