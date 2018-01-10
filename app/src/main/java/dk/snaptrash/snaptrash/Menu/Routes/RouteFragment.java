@@ -1,5 +1,6 @@
 package dk.snaptrash.snaptrash.Menu.Routes;
 
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -16,7 +17,7 @@ import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 
-public class RouteFragment extends Fragment implements AdapterView.OnItemClickListener {
+public class RouteFragment extends DialogFragment implements AdapterView.OnItemClickListener {
 
     @Inject RouteService routeService;
 

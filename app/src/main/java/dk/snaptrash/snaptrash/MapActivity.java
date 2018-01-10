@@ -263,10 +263,7 @@ public class MapActivity
     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
         switch ((int) drawerItem.getIdentifier()) {
             case ROUTE:
-                getFragmentManager().beginTransaction()
-                    .addToBackStack("Route")
-                    .add(R.id.routeView, new RouteFragment())
-                    .commit();
+                new RouteFragment().show(getFragmentManager(), "RouteFragment");
                 break;
             case SIGN_OUT:
                 this.auth.signOut();
