@@ -12,7 +12,7 @@ import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
-import dk.snaptrash.snaptrash.MapActivity;
+import dk.snaptrash.snaptrash.Map.MapActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 
@@ -33,7 +33,7 @@ implements
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
 
-        this.setContentView(R.layout.activity_main);
+        this.setContentView(R.layout.activity_container);
 
         this.getFragmentManager().beginTransaction()
             .add(R.id.screenView, SplashScreenFragment.newInstance())
@@ -64,6 +64,9 @@ implements
                             if (throwable == null) {
                                 this.goToMap();
                             } else {
+                                Log.e("loginactivity", "erekked", throwable);
+                                Toast.makeText(this, "Invalid saved credentials", Toast.LENGTH_SHORT)
+                                    .show();
                                 this.openSignIn();
                             }
                         }
@@ -91,4 +94,9 @@ implements
         return fragmentInjector;
     }
 
+    @Override
+    public void onBackPressed() {
+        Log.e("loginaktivity", "backpressed");
+        this.finishAffinity();
+    }
 }

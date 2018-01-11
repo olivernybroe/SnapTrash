@@ -44,10 +44,10 @@
 
         <fragment
             android:id="@+id/map"
-            android:name="dk.snaptrash.snaptrash.MapFragment"
+            android:name="dk.snaptrash.snaptrash.Map.MapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context="dk.snaptrash.snaptrash.MapActivity" />
+            tools:context="dk.snaptrash.snaptrash.Map.MapActivity" />
 
 
         <View
@@ -101,41 +101,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="@id/sideMenuButtonStartBound"
         app:layout_constraintTop_toTopOf="@id/sideMenuButtonUpperBound"
-        />
-
-    <android.support.constraint.Guideline
-        android:id="@+id/routeViewUpperBound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.10" />
-    <android.support.constraint.Guideline
-        android:id="@+id/routeViewLowerBound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.90" />
-    <android.support.constraint.Guideline
-        android:id="@+id/routeViewStartBound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.10" />
-    <android.support.constraint.Guideline
-        android:id="@+id/routeViewEndBound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.90" />
-    <FrameLayout
-        android:id="@+id/routeView"
-        android:layout_width="0dp"
-        app:layout_constraintTop_toTopOf="@id/routeViewUpperBound"
-        app:layout_constraintBottom_toBottomOf="@id/routeViewLowerBound"
-        app:layout_constraintStart_toStartOf="@id/routeViewStartBound"
-        app:layout_constraintEnd_toEndOf="@id/routeViewEndBound"
-        android:layout_height="0dp">
-    </FrameLayout>
+    />
 
 </android.support.constraint.ConstraintLayout>
 

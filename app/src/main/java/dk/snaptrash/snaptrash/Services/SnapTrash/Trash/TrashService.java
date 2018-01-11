@@ -19,9 +19,14 @@ public interface TrashService {
 
     @NonNull
     CompletableFuture<Collection<Trash>> closeTo(@NonNull LatLng location);
-    @NonNull CompletableFuture<Trash> pickUp(@NonNull Trash trash,@NonNull File pickUpVideo);
 
     @NonNull
-    FirebaseTrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener);
+    CompletableFuture<Trash> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);
+
+    @NonNull
+    CompletableFuture<Collection<Trash>> trashInPickupRange(@NonNull LatLng location);
+
+    @NonNull
+    TrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener);
 
 }

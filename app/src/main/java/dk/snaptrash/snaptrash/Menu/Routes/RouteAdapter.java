@@ -2,8 +2,6 @@ package dk.snaptrash.snaptrash.Menu.Routes;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
-import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -14,18 +12,10 @@ import android.widget.ArrayAdapter;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
-
-import java.util.Collection;
-import java.util.function.BiConsumer;
 
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
-
-import static dk.snaptrash.snaptrash.MapActivity.mGoogleApiClient;
 
 
 public class RouteAdapter extends ArrayAdapter<Route> {

@@ -10,11 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
-import dk.snaptrash.snaptrash.MapActivity;
+import dk.snaptrash.snaptrash.Map.MapActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 
@@ -52,7 +53,6 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
     ) {
         View view = inflater.inflate(R.layout.fragment_log_in, container, false);
 
-
         this.signInButton = view.findViewById(R.id.logIn);
         this.progressBar = view.findViewById(R.id.loading);
 
@@ -89,6 +89,11 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
                                 );
                             } else {
                                 this.idle();
+                                Toast.makeText(
+                                    this.getActivity(),
+                                    "Failed login",
+                                    Toast.LENGTH_SHORT
+                                ).show(); //TODO add actual error handling
                                 Log.e("loginfragment", "pls", throwable);
                             }
                         }

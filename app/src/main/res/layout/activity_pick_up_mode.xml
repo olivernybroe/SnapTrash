@@ -4,13 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="dk.snaptrash.snaptrash.login.LoginActivity">
+    tools:context="dk.snaptrash.snaptrash.PickUp.PickUpModeActivity">
 
-
-    <FrameLayout
-        android:id="@+id/screenView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    </FrameLayout>
 </android.support.constraint.ConstraintLayout>

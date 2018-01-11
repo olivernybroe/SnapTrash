@@ -27,8 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapActivity" />
+        <activity android:name=".Map.MapActivity" />
         <activity android:name=".Menu.ProfileActivity" />
+        <activity android:name=".PickUp.PickUpModeActivity" />
     </application>
 
 </manifest>

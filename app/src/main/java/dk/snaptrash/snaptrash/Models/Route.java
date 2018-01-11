@@ -7,6 +7,8 @@ import lombok.Getter;
 
 @AllArgsConstructor
 public class Route extends Model<Route> {
+
     @Getter String Id;
     @Getter Collection<Trash> trashes;
+
 }

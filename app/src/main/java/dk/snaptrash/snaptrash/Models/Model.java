@@ -1,11 +1,7 @@
 package dk.snaptrash.snaptrash.Models;
 
-import java.util.Collection;
+import java.io.Serializable;
 
-public abstract class Model<MODEL extends Model> {
-
-    public Collection<MODEL> all() {
-        return null;
-    }
+public abstract class Model<T> implements Serializable {
 
 }

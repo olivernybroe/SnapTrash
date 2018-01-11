@@ -2,10 +2,11 @@ package dk.snaptrash.snaptrash.DependencyInjections;
 
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
-import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
+import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
+import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.login.LogInFragment;
 import dk.snaptrash.snaptrash.login.LoginActivity;
-import dk.snaptrash.snaptrash.MapActivity;
+import dk.snaptrash.snaptrash.Map.MapActivity;
 import dk.snaptrash.snaptrash.login.SplashScreenFragment;
 
 @Module
@@ -24,5 +25,9 @@ public abstract class ActivityBuilder {
     abstract MapActivity bindMapActivity();
 
     @ContributesAndroidInjector
-    abstract RouteFragment bindRouteFragment();
+    abstract RouteDialog bindRouteDialog();
+
+    @ContributesAndroidInjector
+    abstract TrashDialog bindTrashInfoDialog();
+
 }

@@ -34,12 +34,14 @@ import java.util.stream.IntStream;
 import javax.security.auth.login.LoginException;
 
 import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.Utils.Geo;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class FirebaseTrashService implements TrashService, EventListener<QuerySnapshot> {
+
     private List<EventListener<Collection<Trash>>> eventListeners = Collections.synchronizedList(new ArrayList<>());
     private OkHttpClient client = new OkHttpClient();
 
@@ -47,8 +49,10 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         trashCollection().addSnapshotListener(this);
     }
 
-    public Query trashCollection() {
-        return FirebaseFirestore.getInstance().collection("trashes").whereLessThan("reserved_until", new Date());
+    private Query trashCollection() {
+        return FirebaseFirestore.getInstance()
+            .collection("trashes")
+            .whereLessThan("reserved_until", new Date());
     }
 
     private HttpUrl.Builder urlBuilder() {
@@ -71,10 +75,10 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                 JSONArray jsonArray = new JSONArray(response.body().string());
 
                 return IntStream.range(0, jsonArray.length())
-                        .mapToObj(i -> toTrash(jsonArray.optJSONObject(i)))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
+                    .mapToObj(i -> toTrash(jsonArray.optJSONObject(i)))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
 
             } catch (IOException|JSONException e) {
                 throw new RuntimeException(e);
@@ -82,8 +86,9 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         });
     }
 
+    @Override
     @NonNull
-    public FirebaseTrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener) {
+    public TrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener) {
         this.eventListeners.add(eventListener);
         return this;
     }
@@ -128,7 +133,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         }
         return Optional.of(new Trash(
             documentSnapshot.getId(),
-            this.toLatLng(documentSnapshot.getGeoPoint("location")),
+            Geo.toLatLng(documentSnapshot.getGeoPoint("location")),
             documentSnapshot.getString("pictureUrl"),
             documentSnapshot.getString("description"),
             documentSnapshot.getString("authorId")
@@ -137,11 +142,6 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     GeoPoint toGeoPoint(LatLng latLng) {
         return new GeoPoint(latLng.latitude, latLng.longitude);
-    }
-
-    @NonNull
-    private LatLng toLatLng(GeoPoint geoPoint) {
-        return new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
     }
 
     @NonNull
@@ -171,6 +171,17 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         });
     }
 
+    @NonNull
+    @Override
+    public CompletableFuture<Collection<Trash>> trashInPickupRange(@NonNull LatLng location) {
+        return this.closeTo(location).thenApply(
+            trashes -> trashes.stream()
+                .filter(
+                    trash -> Geo.distance(trash.getLocation(), location) <= 50
+                ).collect(Collectors.toList())
+        );
+    }
+
     @Override
     public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException e) {
         if(documentSnapshots == null) {
@@ -185,4 +196,5 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             e
         ));
     }
+
 }

@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash;
+package dk.snaptrash.snaptrash.Map;
 
 import android.Manifest;
 import android.app.Activity;
@@ -41,8 +41,12 @@ import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
+import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
 import dk.snaptrash.snaptrash.Menu.ProfileActivity;
-import dk.snaptrash.snaptrash.Menu.Routes.RouteFragment;
+import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
+import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.PickUp.PickUpModeActivity;
+import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
@@ -51,15 +55,14 @@ import dk.snaptrash.snaptrash.login.LoginActivity;
 
 public class MapActivity
     extends Activity
-    implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
     GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
     Drawer.OnDrawerItemClickListener, UserInvalidatedListener
 {
     private GoogleMap mMap;
 
-    @Inject
-    DispatchingAndroidInjector<Fragment> fragmentInjector;
+    @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
     public static GoogleApiClient mGoogleApiClient;
     private LocationRequest locationRequest;
     private Drawer leftSideMenu;
@@ -232,18 +235,34 @@ public class MapActivity
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-
         Log.d("MarkerClicked", "CLICKED");
-        marker.setVisible(false);
-        trashService.pickUp(trashMarkerMap.getTrash(marker), null)
-            .whenComplete((trash, throwable) -> {
-                if(throwable == null) {
-                    runOnUiThread(() -> trashMarkerMap.remove(marker));
-                }
-                else {
-                    Log.e("BROKEN?", "NOPE", throwable);
-                }
-            });
+
+        Trash trash = this.trashMarkerMap.getTrash(marker);
+
+        Log.e("mapactivity", String.valueOf(trash == null));
+
+        TrashDialog trashDialog = TrashDialog.newInstance(
+            trash
+        );
+
+        trashDialog.setOnUserInitiastesPickUpListener(
+            pickedUp -> {
+                Log.e("mapactivity", "user wants to pick up trash");
+
+                marker.setVisible(false);
+
+//                Intent intent = new Intent(this, PickUpModeActivity.class);
+//
+//                Bundle extras = new Bundle();
+//
+//                this.startActivity(
+//                    intent
+//                );
+            }
+        );
+
+        trashDialog.show(this.getFragmentManager(), "TrashInfo");
+
         return true;
     }
 
@@ -263,7 +282,7 @@ public class MapActivity
     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
         switch ((int) drawerItem.getIdentifier()) {
             case ROUTE:
-                new RouteFragment().show(getFragmentManager(), "RouteFragment");
+                new RouteDialog().show(getFragmentManager(), "RouteDialog");
                 break;
             case SIGN_OUT:
                 this.auth.signOut();
@@ -284,4 +303,11 @@ public class MapActivity
         Intent intent = new Intent(this, LoginActivity.class);
         this.startActivity(intent);
     }
+
+    @Override
+    public void onBackPressed() {
+        Log.e("mapaktivity", "backpressed");
+        this.finishAffinity();
+    }
+
 }

@@ -16,4 +16,5 @@ import dk.snaptrash.snaptrash.SnapTrashApplication;
 public interface AppComponent {
 
     void inject(SnapTrashApplication app);
+
 }

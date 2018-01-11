@@ -14,7 +14,6 @@ import com.google.android.gms.auth.api.credentials.CredentialRequestResult;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Collections;
 import java.util.Set;
@@ -28,10 +27,7 @@ import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.FirebaseUserService;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 
-public abstract class AuthenticationActivity
-extends
-    AppCompatActivity
-{
+public abstract class AuthenticationActivity extends AppCompatActivity {
 
     private static final int C_SAVE = 0;
 
@@ -209,7 +205,7 @@ extends
                             Log.e("auth", "credential is null");
                             throw new CompletionException(new Exception());
                         }
-                        Log.e("auth", "getUser chose credentials");
+                        Log.e("auth", "getAuthor chose credentials");
                     } else {
                         throw new CompletionException(new Exception());
                     }
@@ -217,7 +213,6 @@ extends
                     credential = result.getCredential();
                 }
                 Log.e("auth", "successful retrieval");
-//                Log.e("auth", String.valueOf(result == null));
                 Log.e("auth", String.valueOf(credential == null));
                 Log.e(
                     "auth",
