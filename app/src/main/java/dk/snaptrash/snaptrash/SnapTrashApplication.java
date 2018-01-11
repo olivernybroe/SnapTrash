@@ -3,6 +3,13 @@ package dk.snaptrash.snaptrash;
 
 import android.app.Activity;
 import android.app.Application;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.widget.ImageView;
+
+import com.mikepenz.materialdrawer.util.AbstractDrawerImageLoader;
+import com.mikepenz.materialdrawer.util.DrawerImageLoader;
+import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
 
@@ -20,6 +27,18 @@ public class SnapTrashApplication extends Application implements HasActivityInje
         super.onCreate();
         DaggerAppComponent.create()
             .inject(this);
+
+        DrawerImageLoader.init(new AbstractDrawerImageLoader() {
+            @Override
+            public void set(ImageView imageView, Uri uri, Drawable placeholder) {
+                Picasso.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
+            }
+
+            @Override
+            public void cancel(ImageView imageView) {
+                Picasso.with(imageView.getContext()).cancelRequest(imageView);
+            }
+        });
 
     }
 

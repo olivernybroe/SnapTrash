@@ -58,8 +58,7 @@ public class MapActivity
 implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
     GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
-    Drawer.OnDrawerItemClickListener, UserInvalidatedListener
-{
+    Drawer.OnDrawerItemClickListener, UserInvalidatedListener {
     private GoogleMap mMap;
 
     @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
@@ -125,8 +124,10 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
                 .withActivity(this)
                 .addProfiles(
                     new ProfileDrawerItem()
-                        .withName(this.auth.getUser().getEmail())
-                        .withIcon(R.drawable.menu_account_logo)
+                        .withEmail(this.auth.getUser().getEmail())
+                        .withName(this.auth.getUser().getUsername())
+                        .withIcon(this.auth.getUser().getAvatarUrl())
+                        .withNameShown(true)
                 )
                 .withOnAccountHeaderProfileImageListener(this)
                 .build()

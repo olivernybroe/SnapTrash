@@ -35,7 +35,11 @@ public class FirebaseUserService implements UserService {
     @Nullable public static User toUser(@Nullable FirebaseUser user) {
         return user == null ?
             null
-            : new User(user.getEmail(), user.getDisplayName(), "photo");
+            : new User(
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/IMG_20180111_133329.jpg?alt=media&token=a297c769-03e4-4a95-a8ec-2c92bb2803fc"
+             );
     }
 
     @Nullable public static User toUser(@NonNull AuthResult result) {
