@@ -160,7 +160,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         googleMap.setMaxZoomPreference(40);
         googleMap.setMinZoomPreference(20);
-        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        //googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         googleMap.setOnMarkerClickListener(this);
         googleMap.setMyLocationEnabled(true);
         CameraPosition cameraPosition = new CameraPosition.Builder()
