@@ -177,7 +177,10 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return this.closeTo(location).thenApply(
             trashes -> trashes.stream()
                 .filter(
-                    trash -> Geo.distance(trash.getLocation(), location) <= 50
+                    trash -> Geo.distance(
+                        Geo.toLatLng(trash.getLocation()),
+                        location
+                    ) <= 50
                 ).collect(Collectors.toList())
         );
     }

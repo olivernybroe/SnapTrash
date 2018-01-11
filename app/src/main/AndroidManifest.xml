@@ -31,7 +31,7 @@
             android:name=".Map.MapActivity"
             />
         <activity android:name=".Menu.ProfileActivity" />
-        <activity android:name=".PickUp.PickUpModeActivity" />
+        <activity android:name=".PickUp.PickUpActivity" />
     </application>
 
 </manifest>

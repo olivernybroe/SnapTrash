@@ -1,6 +1,7 @@
 package dk.snaptrash.snaptrash.Models;
 
 import android.content.Context;
+import android.location.Location;
 import android.support.annotation.Nullable;
 import android.widget.ImageView;
 
@@ -9,6 +10,8 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
@@ -18,19 +21,27 @@ import lombok.Getter;
 public class Trash extends Model<Trash> {
 
     @Getter private String id;
-    @Getter private LatLng location;
+    @Getter private Location location;
     @Getter private String pictureUrl;
     @Getter private String description;
     @Getter private String authorId;
-    private transient CompletableFuture<User> author;
 
-    public Trash(String id, LatLng location, String pictureUrl, String description, String authorId) {
+    public Trash(String id, Location location, String pictureUrl, String description, String authorId) {
         this.id = id;
         this.location = location;
         this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/trash_placeholder.jpglt=media&token=62b453b8-eee3-4cad-9d75-f728a9a15b13";
         this.pictureUrl = pictureUrl;
         this.description = description;
         this.authorId = authorId;
+    }
+
+    public Trash(String id, LatLng location, String pictureUrl, String description, String authorId) {
+        this.id = id;
+        this.location = new Location("");
+        this.location.setLatitude(location.latitude);
+        this.location.setLongitude(location.longitude);
+        this.pictureUrl = pictureUrl;
+        this.description = description;
     }
 
     public void loadPictureInto(ImageView imageView) {

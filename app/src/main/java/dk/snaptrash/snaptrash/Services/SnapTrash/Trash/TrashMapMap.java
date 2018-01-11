@@ -19,6 +19,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.Utils.Geo;
 
 public class TrashMapMap implements BiMap<Trash, Marker> {
 
@@ -54,7 +55,11 @@ public class TrashMapMap implements BiMap<Trash, Marker> {
     public Marker put(Trash trash) {
         return this.biMap.computeIfAbsent(
             trash,
-            _trash -> this.googleMap.addMarker(markerOptions.position(_trash.getLocation()))
+            _trash -> this.googleMap.addMarker(
+                markerOptions.position(
+                    Geo.toLatLng(_trash.getLocation())
+                )
+            )
         );
     }
 

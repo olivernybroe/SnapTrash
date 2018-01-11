@@ -39,8 +39,6 @@ import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
-import java.util.Set;
-
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
@@ -51,6 +49,7 @@ import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
 import dk.snaptrash.snaptrash.Menu.ProfileActivity;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
@@ -170,15 +169,28 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             .bearing(314)
             .build();
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        mMap = googleMap;
+        this.mMap = googleMap;
 
-        trashMarkerMap = new TrashMapMap(trashService, mMap, getDrawable(R.drawable.trash_icon));
+        this.trashMarkerMap = new TrashMapMap(
+            trashService,
+            mMap,
+            getDrawable(R.drawable.trash_icon)
+        );
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(
+        int requestCode,
+        @NonNull String permissions[],
+        @NonNull int[] grantResults
+    ) {
         this.onMapReady(mMap);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
             return;
         }
         this.onLocationChanged(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient));
@@ -266,16 +278,9 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         trashDialog.setOnUserInitiastesPickUpListener(
             pickedUp -> {
                 Log.e("mapactivity", "user wants to pick up trash");
-
-                marker.setVisible(false);
-
-//                Intent intent = new Intent(this, PickUpModeActivity.class);
-//
-//                Bundle extras = new Bundle();
-//
-//                this.startActivity(
-//                    intent
-//                );
+                Intent intent = new Intent(this, PickUpActivity.class);
+                intent.putExtra(PickUpActivity.trashParameter, trash);
+                MapActivity.this.startActivityForResult(intent, PickUpActivity.PICK_UP_CODE);
             }
         );
 
@@ -326,6 +331,30 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     public void onBackPressed() {
         Log.e("mapaktivity", "backpressed");
         this.finishAffinity();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.e("mapactivity", "onactivityresult: " + String.valueOf(data == null));
+        Log.e("mapactivity", "onactivityresult: " + String.valueOf(requestCode));
+        Log.e("mapactivity", "onactivityresult: " + String.valueOf(resultCode));
+        Log.e("mapactivity", "onactivityresult: " + String.valueOf(PickUpActivity.PICK_UP_CODE));
+        Log.e("mapactivity", "onactivityresult: " + String.valueOf(Activity.RESULT_OK));
+
+        if (requestCode == PickUpActivity.PICK_UP_CODE) {
+            //todo fix resultcode not always canceled
+            Bundle extras = data.getExtras();
+            Log.e("mapactivity", "onactivityresult: " + String.valueOf(extras == null));
+            if (extras != null) {
+                Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
+                Log.e("mapactivity", "onactivityresult: " + String.valueOf(trash == null));
+                if (trash != null) {
+                    this.trashMarkerMap.remove(trash).setVisible(false);
+                }
+            }
+        }
     }
 
 }

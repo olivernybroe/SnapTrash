@@ -20,5 +20,6 @@
     <string name="SessionExpired">Session expired: please login again.</string>
     <string name="PickUpTrash">Pick up</string>
     <string name="SnappedBy">Snapped by: %s</string>
+    <string name="StartRecording">Start Recording</string>
 
 </resources>
