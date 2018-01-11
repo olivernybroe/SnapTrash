@@ -22,7 +22,7 @@ public class RouteAdapter extends ArrayAdapter<Route> {
     RouteService routeService;
 
     @SuppressLint("MissingPermission")
-    public RouteAdapter(@NonNull Activity activity, RouteService routeService) {
+    public RouteAdapter(@NonNull Activity activity, View progressBar, RouteService routeService) {
         super(activity, -1);
         this.routeService = routeService;
 
@@ -30,7 +30,12 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         LocationServices.getFusedLocationProviderClient(activity).getLastLocation().addOnSuccessListener(location ->
             routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())).whenComplete((routes, throwable) -> {
                 if (throwable == null) {
-                    activity.runOnUiThread(() -> this.addAll(routes));
+                    activity.runOnUiThread(() -> {
+                        this.addAll(routes);
+                        if(progressBar != null) {
+                            progressBar.setVisibility(View.INVISIBLE);
+                        }
+                    });
                 }
                 else {
                     Log.e("RouteAdapter", "failed getting the routes.", throwable);

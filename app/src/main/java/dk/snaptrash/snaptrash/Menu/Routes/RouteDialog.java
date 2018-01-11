@@ -32,7 +32,7 @@ public class RouteDialog extends DialogFragment implements AdapterView.OnItemCli
         View view = inflater.inflate(R.layout.fragment_route, container, false);
 
         ListView listView = view.findViewById(R.id.routeAdapterView);
-        listView.setAdapter(new RouteAdapter(this.getActivity(), routeService));
+        listView.setAdapter(new RouteAdapter(this.getActivity(),view.findViewById(R.id.routeDialogProgressBar), routeService));
         listView.setOnItemClickListener(this);
 
         return view;
