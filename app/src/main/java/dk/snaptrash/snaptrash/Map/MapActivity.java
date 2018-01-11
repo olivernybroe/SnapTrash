@@ -1,10 +1,11 @@
 package dk.snaptrash.snaptrash.Map;
 
 import android.Manifest;
-import android.app.ActionBar;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -38,6 +39,8 @@ import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
+import java.util.Set;
+
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
@@ -48,7 +51,6 @@ import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
 import dk.snaptrash.snaptrash.Menu.ProfileActivity;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.Models.Trash;
-import dk.snaptrash.snaptrash.PickUp.PickUpModeActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
@@ -72,6 +74,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
     private TrashMapMap trashMarkerMap;
+    public boolean hasSetFirstPosition = false;
 
     private static final int ROUTE = 1;
     private static final int STORE = 2;
@@ -150,14 +153,16 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         this.leftSideMenuButton.setOnClickListener(this);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
         googleMap.getUiSettings().setCompassEnabled(false);
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        googleMap.setMaxZoomPreference(20);
+        googleMap.setMaxZoomPreference(40);
         googleMap.setMinZoomPreference(20);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         googleMap.setOnMarkerClickListener(this);
+        googleMap.setMyLocationEnabled(true);
         CameraPosition cameraPosition = new CameraPosition.Builder()
             .target(new LatLng(39.87266, -4.028275))
             .zoom(20)
@@ -221,9 +226,13 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         if(mMap == null) {
             return;
         }
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(
+        if(!hasSetFirstPosition) {
+            hasSetFirstPosition = true;
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(
                 new LatLng(location.getLatitude(), location.getLongitude())
-        ));
+            ));
+        }
+
         trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
             .whenComplete((trashes, throwable) -> {
                 if(throwable == null) {
