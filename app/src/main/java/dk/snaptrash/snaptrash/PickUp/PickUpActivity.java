@@ -79,10 +79,10 @@ implements
                     } else {
                         this.getParent().setResult(Activity.RESULT_OK, data);
                     }
-                    this.finish();
                 } else {
                     Log.e("pickactivity", "rip", throwable); //todo inform user
                 }
+                this.finish();
             }
         );
     }

@@ -19,7 +19,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import dk.snaptrash.snaptrash.Models.Trash;
-import dk.snaptrash.snaptrash.Utils.Geo;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 
 public class TrashMapMap implements BiMap<Trash, Marker> {
 
@@ -75,6 +75,18 @@ public class TrashMapMap implements BiMap<Trash, Marker> {
     public Marker getMarker(Trash trash) {
         return this.biMap.get(trash);
     }
+
+    @Override
+    public Marker remove(Object key) {
+        Trash trash = (Trash) key;
+        Marker marker = this.biMap.get(trash);
+        if (marker != null) {
+            trash.setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
+            marker.setVisible(false);
+        }
+        return marker;
+    }
+
 
     @Deprecated
     @Override
@@ -141,11 +153,6 @@ public class TrashMapMap implements BiMap<Trash, Marker> {
     @Override
     public Marker put(Trash key, Marker value) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Marker remove(Object key) {
-        return null;
     }
 
     @Deprecated

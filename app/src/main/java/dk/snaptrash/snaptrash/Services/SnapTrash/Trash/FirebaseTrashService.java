@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -20,7 +19,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,10 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.security.auth.login.LoginException;
-
 import dk.snaptrash.snaptrash.Models.Trash;
-import dk.snaptrash.snaptrash.Utils.Geo;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -147,28 +143,30 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     @NonNull
     @Override
     public CompletableFuture<Trash> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo) {
-        return CompletableFuture.supplyAsync(() -> {
-            Request request = new Request.Builder()
-                .url(urlBuilder()
-                    .addPathSegment(trash.getId())
-                    .addPathSegment("pick-up")
-                    .build()
-                )
-                .build();
+        return CompletableFuture.supplyAsync(
+            () -> {
+                Request request = new Request.Builder()
+                    .url(urlBuilder()
+                        .addPathSegment(trash.getId())
+                        .addPathSegment("pick-up")
+                        .build()
+                    )
+                    .build();
 
-            try {
-                Response response = client.newCall(request).execute();
-
-                if(response.code() != 204) {
-                    throw new RuntimeException("PICKUP IS NOT A 204 RESPONSE CODE.");
-                }
+//                try {
+//                    Response response = client.newCall(request).execute();
+//
+//                    if(response.code() != 204) {
+//                        throw new RuntimeException("PICKUP IS NOT A 204 RESPONSE CODE.");
+//                    }
 
                 return trash;
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
             }
-        });
+        );
     }
 
     @NonNull

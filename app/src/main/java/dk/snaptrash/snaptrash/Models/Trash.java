@@ -16,17 +16,26 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
 
+import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
 import lombok.Getter;
+import lombok.Setter;
 
 public class Trash extends Model<Trash> {
 
     @Getter private String id;
-    @Getter private Location location;
+    @Getter private Coordinate location;
     @Getter private String pictureUrl;
     @Getter private String description;
     @Getter private String authorId;
 
-    public Trash(String id, Location location, String pictureUrl, String description, String authorId) {
+    public enum Status {
+        SYNCHRONIZED,
+        PENDING_REMOVAL_CONFIRMED
+    }
+
+    @Getter@Setter private Status status = Status.SYNCHRONIZED;
+
+    public Trash(String id, Coordinate location, String pictureUrl, String description, String authorId) {
         this.id = id;
         this.location = location;
         this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/trash_placeholder.jpglt=media&token=62b453b8-eee3-4cad-9d75-f728a9a15b13";
@@ -37,9 +46,7 @@ public class Trash extends Model<Trash> {
 
     public Trash(String id, LatLng location, String pictureUrl, String description, String authorId) {
         this.id = id;
-        this.location = new Location("");
-        this.location.setLatitude(location.latitude);
-        this.location.setLongitude(location.longitude);
+        this.location = new Coordinate(location.latitude, location.longitude);
         this.pictureUrl = pictureUrl;
         this.description = description;
     }

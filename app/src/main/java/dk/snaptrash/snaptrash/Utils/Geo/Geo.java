@@ -1,4 +1,4 @@
-package dk.snaptrash.snaptrash.Utils;
+package dk.snaptrash.snaptrash.Utils.Geo;
 
 import android.location.Location;
 import android.support.annotation.NonNull;
@@ -34,6 +34,11 @@ public class Geo {
     @NonNull
     public static LatLng toLatLng(Location location) {
         return new LatLng(location.getLatitude(), location.getLongitude());
+    }
+
+    @NonNull
+    public static LatLng toLatLng(Coordinate coordinate) {
+        return new LatLng(coordinate.getLatitude(), coordinate.getLongtitude());
     }
 
 }

@@ -356,22 +356,14 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        Log.e("mapactivity", "onactivityresult: " + String.valueOf(data == null));
-        Log.e("mapactivity", "onactivityresult: " + String.valueOf(requestCode));
-        Log.e("mapactivity", "onactivityresult: " + String.valueOf(resultCode));
-        Log.e("mapactivity", "onactivityresult: " + String.valueOf(PickUpActivity.PICK_UP_CODE));
-        Log.e("mapactivity", "onactivityresult: " + String.valueOf(Activity.RESULT_OK));
-
         if (requestCode == PickUpActivity.PICK_UP_CODE) {
-            //todo fix resultcode not always canceled
-            Bundle extras = data.getExtras();
-            Log.e("mapactivity", "onactivityresult: " + String.valueOf(extras == null));
-            if (extras != null) {
-                Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
-                Log.e("mapactivity", "onactivityresult: " + String.valueOf(trash == null));
-                if (trash != null) {
-                    this.trashMarkerMap.remove(trash).setVisible(false);
+            if (resultCode == Activity.RESULT_OK) {
+                Bundle extras = data.getExtras();
+                if (extras != null) {
+                    Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
+                    if (trash != null) {
+                        this.trashMarkerMap.remove(trash);
+                    }
                 }
             }
         }

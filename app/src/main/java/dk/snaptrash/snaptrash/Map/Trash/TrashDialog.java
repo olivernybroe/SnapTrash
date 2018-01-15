@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 
@@ -21,7 +22,7 @@ import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
-import dk.snaptrash.snaptrash.Utils.Geo;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import lombok.Setter;
 

@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/RecordingChronometer"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/CameraView"
         android:text="@string/StartRecording"
@@ -28,7 +28,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:cameraAudio="on"
     >
-
     </com.otaliastudios.cameraview.CameraView>
+
+    <Chronometer
+        android:id="@+id/RecordingChronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/CameraView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/RecordButton"
+    />
 
 </android.support.constraint.ConstraintLayout>

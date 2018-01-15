@@ -2,10 +2,13 @@ package dk.snaptrash.snaptrash.PickUp;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Chronometer;
 
 import com.otaliastudios.cameraview.Audio;
 import com.otaliastudios.cameraview.CameraListener;
@@ -32,6 +35,8 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
     );
 
     private CameraView cameraView;
+    private Chronometer chronometer;
+    private Button startRecordingButton;
 
     public PickUpRecordingFragment() {
         // Required empty public constructor
@@ -65,12 +70,26 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
         this.cameraView.setAudio(Audio.OFF);
         this.cameraView.setSessionType(SessionType.VIDEO);
 
-        view.findViewById(R.id.RecordButton).setOnClickListener(this);
+        this.chronometer = view.findViewById(R.id.RecordingChronometer);
+
+        this.chronometer.setOnChronometerTickListener(
+            chronometer -> chronometer.setText(
+                android.text.format.DateFormat.format(
+                    "ss",
+                    SystemClock.elapsedRealtime()-chronometer.getBase()
+                )
+            )
+        );
+
+        this.startRecordingButton = view.findViewById(R.id.RecordButton);
+
+        this.startRecordingButton.setOnClickListener(this);
 
         this.cameraView.addCameraListener(
             new CameraListener() {
                 @Override
                 public void onVideoTaken(File video) {
+                    PickUpRecordingFragment.this.chronometer.stop();
                     PickUpRecordingFragment.this.listeners.forEach(
                         listener -> listener.videoTaken(video)
                     );
@@ -102,6 +121,10 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
     @Override
     public void onClick(View v) {
         Log.e("recordingfragment", "view clicked");
+        this.chronometer.setVisibility(View.VISIBLE);
+        this.startRecordingButton.setVisibility(View.GONE);
+        this.chronometer.setBase(SystemClock.elapsedRealtime());
+        this.chronometer.start();
         this.cameraView.startCapturingVideo(null, 3000);
     }
 
