@@ -38,7 +38,7 @@ public class FirebaseUserService implements UserService {
             : new User(
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/IMG_20180111_133329.jpg?alt=media&token=a297c769-03e4-4a95-a8ec-2c92bb2803fc"
+                user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/user_placeholder.jpgt=media&token=a297c769-03e4-4a95-a8ec-2c92bb2803fc"
              );
     }
 

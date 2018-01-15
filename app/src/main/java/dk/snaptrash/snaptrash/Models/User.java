@@ -17,6 +17,7 @@ public class User extends Model<User> {
     @NonNull @Setter @Getter
     private String avatarUrl;
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

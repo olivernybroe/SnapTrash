@@ -2,6 +2,7 @@ package dk.snaptrash.snaptrash.Menu.Routes;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
@@ -22,15 +24,19 @@ public class RouteAdapter extends ArrayAdapter<Route> {
     RouteService routeService;
 
     @SuppressLint("MissingPermission")
-    public RouteAdapter(@NonNull Activity activity, View progressBar, RouteService routeService) {
-        super(activity, -1);
+    public RouteAdapter(@NonNull RouteDialog dialog, View progressBar, RouteService routeService) {
+        super(dialog.getActivity(), -1);
         this.routeService = routeService;
 
-
-        LocationServices.getFusedLocationProviderClient(activity).getLastLocation().addOnSuccessListener(location ->
+        LocationServices.getFusedLocationProviderClient(dialog.getActivity()).getLastLocation().addOnSuccessListener(location -> {
+            if(location == null) {
+                Toast.makeText(dialog.getActivity(), "Failed finding your location.", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                return;
+            }
             routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())).whenComplete((routes, throwable) -> {
                 if (throwable == null) {
-                    activity.runOnUiThread(() -> {
+                    dialog.getActivity().runOnUiThread(() -> {
                         this.addAll(routes);
                         if(progressBar != null) {
                             progressBar.setVisibility(View.INVISIBLE);
@@ -39,10 +45,14 @@ public class RouteAdapter extends ArrayAdapter<Route> {
                 }
                 else {
                     Log.e("RouteAdapter", "failed getting the routes.", throwable);
+                    Toast.makeText(dialog.getActivity(), "Failed connecting to server.", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
                 }
-            })
-        ).addOnFailureListener(e -> {
+            });
+        }).addOnFailureListener(e -> {
             Log.e("RouteAdapter", "Failed getting current location.", e);
+            Toast.makeText(dialog.getActivity(), "Failed finding your location.", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
         });
     }
 

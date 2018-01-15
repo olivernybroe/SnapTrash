@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;

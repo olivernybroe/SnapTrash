@@ -3,6 +3,7 @@ package dk.snaptrash.snaptrash.DependencyInjections;
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
 import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
+import dk.snaptrash.snaptrash.Menu.ProfileDialog;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.PickUp.PickUpRecordingFragment;
@@ -37,5 +38,8 @@ public abstract class ActivityBuilder {
 
     @ContributesAndroidInjector
     abstract PickUpRecordingFragment bindPickUpRecordingFragment();
+
+    @ContributesAndroidInjector
+    abstract ProfileDialog bindProfileDialog();
 
 }

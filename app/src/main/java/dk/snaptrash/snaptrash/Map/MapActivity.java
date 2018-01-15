@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -47,6 +48,7 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
 import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
 import dk.snaptrash.snaptrash.Menu.ProfileActivity;
+import dk.snaptrash.snaptrash.Menu.ProfileDialog;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
@@ -291,8 +293,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 
     @Override
     public boolean onProfileImageClick(View view, IProfile profile, boolean current) {
-        Intent intent = new Intent(this, ProfileActivity.class);
-        this.startActivity(intent);
+        new ProfileDialog().show(getFragmentManager(), "ProfileDialog");
         return false;
     }
 
@@ -306,12 +307,31 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         switch ((int) drawerItem.getIdentifier()) {
             case ROUTE:
                 new RouteDialog().show(getFragmentManager(), "RouteDialog");
+                this.leftSideMenu.deselect();
                 break;
             case SIGN_OUT:
                 this.auth.signOut();
                 this.startActivity(
                     new Intent(this, LoginActivity.class)
                 );
+                this.leftSideMenu.deselect();
+                break;
+            case STORE:
+                Toast.makeText(this, "Store not yet implemented.", Toast.LENGTH_SHORT).show();
+                this.leftSideMenu.deselect();
+                break;
+            case SOCIAL:
+                Toast.makeText(this, "Social not yet implemented.", Toast.LENGTH_SHORT).show();
+                this.leftSideMenu.deselect();
+                break;
+            case SETTINGS:
+                Toast.makeText(this, "Settings not yet implemented.", Toast.LENGTH_SHORT).show();
+                this.leftSideMenu.deselect();
+                break;
+            case HELP:
+                Toast.makeText(this, "Help & feedback not yet implemented.", Toast.LENGTH_SHORT).show();
+                this.leftSideMenu.deselect();
+                break;
         }
         return false;
     }

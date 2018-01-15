@@ -7,9 +7,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.widget.ImageView;
 
+import com.jakewharton.picasso.OkHttp3Downloader;
 import com.mikepenz.materialdrawer.util.AbstractDrawerImageLoader;
 import com.mikepenz.materialdrawer.util.DrawerImageLoader;
 import com.squareup.picasso.Picasso;
+
+import java.util.Collections;
 
 import javax.inject.Inject;
 
@@ -17,6 +20,8 @@ import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 import dk.snaptrash.snaptrash.DependencyInjections.DaggerAppComponent;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 
 public class SnapTrashApplication extends Application implements HasActivityInjector{
 
@@ -27,6 +32,16 @@ public class SnapTrashApplication extends Application implements HasActivityInje
         super.onCreate();
         DaggerAppComponent.create()
             .inject(this);
+
+        final OkHttpClient client = new OkHttpClient.Builder()
+            .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+            .build();
+
+        final Picasso picasso = new Picasso.Builder(this)
+            .downloader(new OkHttp3Downloader(client))
+            .build();
+
+        Picasso.setSingletonInstance(picasso);
 
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
