@@ -21,6 +21,7 @@ import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 import dk.snaptrash.snaptrash.DependencyInjections.DaggerAppComponent;
+import dk.snaptrash.snaptrash.Services.SnapTrash.FirebaseSnapTrashModule;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 
@@ -31,8 +32,9 @@ public class SnapTrashApplication extends Application implements HasActivityInje
     @Override
     public void onCreate() {
         super.onCreate();
-        DaggerAppComponent.create()
-            .inject(this);
+        DaggerAppComponent.builder()
+            .application(this)
+            .build().inject(this);
 
         final OkHttpClient client = new OkHttpClient.Builder()
             .protocols(Collections.singletonList(Protocol.HTTP_1_1))
