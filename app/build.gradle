@@ -71,6 +71,8 @@ dependencies {
     compile 'me.zhanghai.android.materialprogressbar:library:1.4.2'
     compile 'de.hdodenhof:circleimageview:2.2.0'
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
+    compile 'com.akexorcist:googledirectionlibrary:1.1.1'
+
 }
 
 

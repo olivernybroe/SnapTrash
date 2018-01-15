@@ -7,6 +7,7 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -19,6 +20,13 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.akexorcist.googledirection.DirectionCallback;
+import com.akexorcist.googledirection.GoogleDirection;
+import com.akexorcist.googledirection.constant.TransportMode;
+import com.akexorcist.googledirection.model.Direction;
+import com.akexorcist.googledirection.model.Leg;
+import com.akexorcist.googledirection.model.Step;
+import com.akexorcist.googledirection.util.DirectionConverter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -30,6 +38,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
@@ -39,6 +48,11 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 
@@ -178,6 +192,45 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             mMap,
             getDrawable(R.drawable.trash_icon)
         );
+
+
+        GoogleDirection.withServerKey(getString(R.string.google_navigation_key))
+            .from(new LatLng(55.730177, 12.397181))
+            .and(new LatLng(55.730917, 12.395164))
+            .and(new LatLng(55.730115, 12.398567))
+            .and(new LatLng(55.730784, 12.397488))
+            .to(new LatLng(55.730177, 12.397181))
+            .transportMode(TransportMode.WALKING)
+            .execute(new DirectionCallback() {
+                @Override
+                public void onDirectionSuccess(Direction direction, String rawBody) {
+                    if(direction.isOK()) {
+                        Log.e("DIRECTION", "is ok");
+                        MapActivity.this.runOnUiThread(() -> {
+
+                            Log.e("DIRECTION", direction.getRouteList().get(0).getLegList().get(0).getEndAddress());
+
+                            direction.getRouteList().get(0).getLegList().stream().map((leg) ->
+                                DirectionConverter.createPolyline(
+                                    MapActivity.this,
+                                    leg.getDirectionPoint(),
+                                    5,
+                                    Color.RED
+                            )).forEach(googleMap::addPolyline);
+                        });
+
+                        // Do something
+                    } else {
+                        Log.e("DIRECTION", "is not ok");
+                        // Do something
+                    }
+                }
+
+                @Override
+                public void onDirectionFailure(Throwable t) {
+                    Log.e("DIRECTION", "is really not ok", t);
+                }
+            });
     }
 
     @Override
@@ -307,32 +360,27 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         switch ((int) drawerItem.getIdentifier()) {
             case ROUTE:
                 new RouteDialog().show(getFragmentManager(), "RouteDialog");
-                this.leftSideMenu.deselect();
                 break;
             case SIGN_OUT:
                 this.auth.signOut();
                 this.startActivity(
                     new Intent(this, LoginActivity.class)
                 );
-                this.leftSideMenu.deselect();
                 break;
             case STORE:
                 Toast.makeText(this, "Store not yet implemented.", Toast.LENGTH_SHORT).show();
-                this.leftSideMenu.deselect();
                 break;
             case SOCIAL:
                 Toast.makeText(this, "Social not yet implemented.", Toast.LENGTH_SHORT).show();
-                this.leftSideMenu.deselect();
                 break;
             case SETTINGS:
                 Toast.makeText(this, "Settings not yet implemented.", Toast.LENGTH_SHORT).show();
-                this.leftSideMenu.deselect();
                 break;
             case HELP:
                 Toast.makeText(this, "Help & feedback not yet implemented.", Toast.LENGTH_SHORT).show();
-                this.leftSideMenu.deselect();
                 break;
         }
+        this.leftSideMenu.deselect();
         return false;
     }
 

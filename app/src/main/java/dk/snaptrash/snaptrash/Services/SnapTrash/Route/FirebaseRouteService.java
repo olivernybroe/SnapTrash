@@ -86,13 +86,42 @@ public class FirebaseRouteService implements RouteService {
 
     @NonNull
     @Override
-    public CompletableFuture<Route> getCurrentRoute() {
-        return null;
+    public CompletableFuture<Optional<Route>> getCurrentRoute() {
+        return CompletableFuture.supplyAsync(() -> {
+            Request request = new Request.Builder()
+                .url(urlBuilder()
+                    .addPathSegment("active")
+                    .build()
+                ).build();
+
+            try {
+                Response response = client.newCall(request).execute();
+                return toRoute(new JSONObject(response.body().string()));
+
+            } catch (IOException|JSONException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @NonNull
     @Override
     public CompletableFuture<Route> selectRoute(Route route) {
-        return null;
+        return CompletableFuture.supplyAsync(() -> {
+            Request request = new Request.Builder()
+                .url(urlBuilder()
+                    .addPathSegment(route.getId())
+                    .addPathSegment("activate")
+                    .build()
+                ).build();
+
+            try {
+                client.newCall(request).execute();
+                return route;
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

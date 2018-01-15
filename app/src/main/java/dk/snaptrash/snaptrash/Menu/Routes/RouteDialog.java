@@ -8,6 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 
@@ -42,7 +45,14 @@ public class RouteDialog extends DialogFragment implements AdapterView.OnItemCli
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         Route route = (Route) adapterView.getItemAtPosition(i);
 
-        routeService.selectRoute(route);
+        routeService.selectRoute(route).whenComplete((route1, throwable) -> {
+            if(throwable == null) {
+                Toast.makeText(this.getActivity(), "Route selected, adding to map.", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(this.getActivity(), "Failed choosing the route.", Toast.LENGTH_SHORT).show();
+            }
+        });
         getFragmentManager().popBackStack();
     }
 }

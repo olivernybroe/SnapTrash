@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -65,6 +66,10 @@ public class Trash extends Model<Trash> {
 
     public RequestCreator loadPicture(Context context) {
         return Picasso.with(context).load(this.pictureUrl);
+    }
+
+    public LatLng toLatLng() {
+        return Geo.toLatLng(this.getLocation());
     }
 
     @Override
