@@ -16,6 +16,17 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@drawable/profile_background_placeholder"
         />
+    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
+        android:id="@+id/profileDialogProgressBar"
+        app:layout_constraintTop_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        app:mpb_progressStyle="horizontal"
+        style="@style/Widget.MaterialProgressBar.ProgressBar.Horizontal" />
 
 
     <de.hdodenhof.circleimageview.CircleImageView
@@ -29,7 +40,6 @@
         app:layout_constraintEnd_toEndOf="@id/header_view"
         android:layout_height="80dp"
         android:layout_width="80dp" />
-
     <TextView
         android:id="@+id/name_view"
         android:textSize="20sp"

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.jakewharton.picasso.OkHttp3Downloader;
@@ -38,7 +39,10 @@ public class SnapTrashApplication extends Application implements HasActivityInje
             .build();
 
         final Picasso picasso = new Picasso.Builder(this)
-            .downloader(new OkHttp3Downloader(client))
+            .listener((picasso1, uri, exception) -> {
+                Log.e("PICASSO", "failed loading image on url:"+uri.toString()
+                    , exception);
+            })
             .build();
 
         Picasso.setSingletonInstance(picasso);

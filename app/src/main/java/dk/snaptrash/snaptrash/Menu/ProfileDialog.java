@@ -8,8 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
@@ -21,7 +24,7 @@ import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 
-public class ProfileDialog extends DialogFragment {
+public class ProfileDialog extends DialogFragment implements Callback {
 
     @Inject
     AuthProvider auth;
@@ -29,6 +32,8 @@ public class ProfileDialog extends DialogFragment {
     TextView emailView;
     TextView nameView;
     ImageView headerView;
+    int loadCount = 0;
+    ProgressBar progressBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,15 +48,18 @@ public class ProfileDialog extends DialogFragment {
 
         User user = auth.getUser();
 
+        progressBar = view.findViewById(R.id.profileDialogProgressBar);
         headerView = view.findViewById(R.id.header_view);
         Picasso.with(this.getActivity()).load("http://placeimg.com/640/480/nature")
             .placeholder(R.drawable.profile_background_placeholder)
-            .into(headerView);
+            .fit()
+            .centerInside()
+            .into(headerView, this);
 
         profileView = view.findViewById(R.id.profile_view);
         Picasso.with(this.getActivity()).load(user.getAvatarUrl())
             .placeholder(R.drawable.user_placeholder)
-            .into(profileView);
+            .into(profileView, this);
 
         emailView = view.findViewById(R.id.email_view);
         emailView.setText(user.getEmail());
@@ -59,10 +67,19 @@ public class ProfileDialog extends DialogFragment {
         nameView = view.findViewById(R.id.name_view);
         nameView.setText("Iohan Strässenburg");
 
-
-        //auth.getUser().
-
         return view;
     }
 
+    @Override
+    public void onSuccess() {
+        if(++loadCount >= 2) {
+            progressBar.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
+    public void onError() {
+        Toast.makeText(this.getActivity(), "Failed fetching your profile.", Toast.LENGTH_SHORT).show();
+        this.dismiss();
+    }
 }
