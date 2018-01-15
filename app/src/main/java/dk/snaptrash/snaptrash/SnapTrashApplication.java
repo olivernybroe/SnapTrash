@@ -50,7 +50,8 @@ public class SnapTrashApplication extends Application implements HasActivityInje
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder) {
-                Picasso.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
+                Picasso.with(imageView.getContext()).load(uri).placeholder(placeholder)
+                    .fit().centerCrop().into(imageView);
             }
 
             @Override

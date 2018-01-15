@@ -58,7 +58,8 @@ public class ProfileDialog extends DialogFragment implements Callback {
 
         profileView = view.findViewById(R.id.profile_view);
         Picasso.with(this.getActivity()).load(user.getAvatarUrl())
-            .placeholder(R.drawable.user_placeholder)
+            .noFade()
+            .placeholder(R.drawable.placeholder_account_circle)
             .into(profileView, this);
 
         emailView = view.findViewById(R.id.email_view);
