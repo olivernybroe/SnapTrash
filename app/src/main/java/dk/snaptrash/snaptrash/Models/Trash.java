@@ -28,6 +28,7 @@ public class Trash extends Model<Trash> {
     @Getter private String pictureUrl;
     @Getter private String description;
     @Getter private String authorId;
+    @Getter @Nullable String pickedUpById;
 
     public enum Status {
         SYNCHRONIZED,
@@ -39,7 +40,7 @@ public class Trash extends Model<Trash> {
     public Trash(String id, Coordinate location, String pictureUrl, String description, String authorId) {
         this.id = id;
         this.location = location;
-        this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/trash_placeholder.jpglt=media&token=62b453b8-eee3-4cad-9d75-f728a9a15b13";
+        this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/IMG_20180110_144336.jpg?alt=media&token=2ff58097-37a5-45d3-8450-cabd65b6b229";
         this.pictureUrl = pictureUrl;
         this.description = description;
         this.authorId = authorId;

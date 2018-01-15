@@ -10,7 +10,9 @@ import lombok.ToString;
 @AllArgsConstructor
 public class User extends Model<User> {
 
-    @NonNull @Setter@Getter
+    @NonNull @Getter
+    private String id;
+    @NonNull @Getter
     private String email;
     @Setter @Getter
     private String username;
@@ -25,11 +27,12 @@ public class User extends Model<User> {
 
         User user = (User) o;
 
-        return email != null ? email.equals(user.email) : user.email == null;
+        return id.equals(user.id);
     }
 
     @Override
     public int hashCode() {
-        return email != null ? email.hashCode() : 0;
+        return id.hashCode();
     }
+
 }

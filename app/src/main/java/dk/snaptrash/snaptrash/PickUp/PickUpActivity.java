@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.File;
 
@@ -66,6 +67,19 @@ implements
 
     @Override
     public void videoTaken(File video) {
+        TrashService.OnPickUpVerifiedListener listener = trash -> {
+            if (trash == this.trash) {
+                this.runOnUiThread(
+                    () -> Toast.makeText(
+                        this.getApplicationContext(),
+                        getString(R.string.TrashPickUpVerified),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                );
+            }
+        };
+        this.trashService.addOnPickUpVerifiedListener(listener);
+
         this.trashService.pickUp(
             this.trash,
             video
@@ -80,7 +94,12 @@ implements
                         this.getParent().setResult(Activity.RESULT_OK, data);
                     }
                 } else {
-                    Log.e("pickactivity", "rip", throwable); //todo inform user
+                    this.trashService.removeOnPickUpVerifiedListener(listener);
+                    Log.e("pickactivity", "rip", throwable);
+                    this.runOnUiThread(
+                        () -> Toast.makeText(this, R.string.FailedPickUp, Toast.LENGTH_SHORT).show()
+                    );
+                    Log.e("pickupactivity", "after toast");
                 }
                 this.finish();
             }

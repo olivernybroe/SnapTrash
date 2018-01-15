@@ -11,9 +11,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.location.LocationServices;
+import com.squareup.picasso.Callback;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
@@ -122,22 +124,16 @@ implements
             )
         );
 
-        CompletableFuture fetchTrashCanBePickedUp = TaskWrapper.wrapAsync(
-            LocationServices.getFusedLocationProviderClient(this.getActivity()).getLastLocation()
-        ).thenAccept(
-            location -> this.trashService.trashInPickupRange(
-                Geo.toLatLng(location)
-            ).thenAccept(
-                trashes -> {
-                    if (trashes.contains(this.trash)) {
-                        Log.e("trashdialog", "trash can be picked up: " + String.valueOf(trashes.size()));
+        CompletableFuture fetchTrashCanBePickedUp =
+            this.trashService.trashCanBePickedUp(trash).thenAccept(
+                aBoolean -> {
+                    if (aBoolean) {
                         this.getActivity().runOnUiThread(
                             () -> view.findViewById(R.id.PickUpTrashButton).setEnabled(true)
                         );
                     }
                 }
-            )
-        );
+            );
 
         CompletableFuture.allOf(
             fetchAuthorName,

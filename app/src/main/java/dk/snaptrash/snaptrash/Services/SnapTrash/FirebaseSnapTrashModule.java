@@ -1,5 +1,7 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash;
 
+import android.content.Context;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -13,7 +15,8 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.FirebaseUserService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 
-@Module
+
+@Module()
 public class FirebaseSnapTrashModule implements SnapTrashModule {
 
     @Singleton
@@ -30,8 +33,8 @@ public class FirebaseSnapTrashModule implements SnapTrashModule {
 
     @Singleton
     @Provides
-    public TrashService provideTrashService() {
-        return new FirebaseTrashService();
+    public TrashService provideTrashService(Context context) {
+        return new FirebaseTrashService(context);
     }
 
     @Singleton

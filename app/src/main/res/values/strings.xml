@@ -21,5 +21,7 @@
     <string name="PickUpTrash">Pick up</string>
     <string name="SnappedBy">Snapped by: %s</string>
     <string name="StartRecording">Start Recording</string>
+    <string name="TrashPickUpVerified">Trash Pickup Verified</string>
+    <string name="FailedPickUp">Failed pickup</string>
 
 </resources>

@@ -1,5 +1,7 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash;
 
+import android.content.Context;
+
 import dagger.Module;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
@@ -13,7 +15,7 @@ public interface SnapTrashModule {
 
     UserService provideUserService();
 
-    TrashService provideTrashService();
+    TrashService provideTrashService(Context context);
 
     RouteService provideRouteService();
 }

@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -38,6 +37,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -61,14 +61,12 @@ import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
 import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
-import dk.snaptrash.snaptrash.Menu.ProfileActivity;
 import dk.snaptrash.snaptrash.Menu.ProfileDialog;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
-import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.UserInvalidatedListener;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
@@ -78,8 +76,9 @@ public class MapActivity
 implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
     GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
-    Drawer.OnDrawerItemClickListener, UserInvalidatedListener {
-    private GoogleMap mMap;
+    Drawer.OnDrawerItemClickListener {
+
+    private GoogleMap googleMap;
 
     @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
     public static GoogleApiClient mGoogleApiClient;
@@ -89,7 +88,9 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
     private TrashMapMap trashMarkerMap;
-    public boolean hasSetFirstPosition = false;
+    private Location anchhor;
+
+    private boolean hasSetFirstPosition = false;
 
     private static final int ROUTE = 1;
     private static final int STORE = 2;
@@ -185,14 +186,14 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             .bearing(314)
             .build();
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        this.mMap = googleMap;
+        this.googleMap = googleMap;
 
         this.trashMarkerMap = new TrashMapMap(
+            this,
             trashService,
-            mMap,
+            this.googleMap,
             getDrawable(R.drawable.trash_icon)
         );
-
 
         GoogleDirection.withServerKey(getString(R.string.google_navigation_key))
             .from(new LatLng(55.730177, 12.397181))
@@ -239,7 +240,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         @NonNull String permissions[],
         @NonNull int[] grantResults
     ) {
-        this.onMapReady(mMap);
+        this.onMapReady(googleMap);
         if (
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
@@ -290,25 +291,24 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 
     @Override
     public void onLocationChanged(Location location) {
-        if(mMap == null) {
+        Log.e("mapactivity", "onlocationchanged");
+        if(googleMap == null) {
             return;
         }
+        Log.e("mapactivity", this.googleMap.toString());
         if(!hasSetFirstPosition) {
+            Log.e("mapactivity", "new pos");
             hasSetFirstPosition = true;
-            mMap.animateCamera(CameraUpdateFactory.newLatLng(
+            googleMap.animateCamera(CameraUpdateFactory.newLatLng(
                 new LatLng(location.getLatitude(), location.getLongitude())
             ));
         }
+        if (this.anchhor == null || this.anchhor.distanceTo(location) >= 100) {
+            Log.e("mapactivity", "new anchor");
+            this.anchhor = location;
+            this.trashService.trashes();
+        }
 
-        trashService.closeTo(new LatLng(location.getLatitude(), location.getLongitude()))
-            .whenComplete((trashes, throwable) -> {
-                if(throwable == null) {
-                    runOnUiThread(() -> trashes.forEach(trashMarkerMap::put));
-                }
-                else {
-                    Log.e("BROKEN?", "NOPE", throwable);
-                }
-            });
     }
 
     @Override
@@ -390,12 +390,6 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     }
 
     @Override
-    public void userInvalidated() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        this.startActivity(intent);
-    }
-
-    @Override
     public void onBackPressed() {
         Log.e("mapaktivity", "backpressed");
         this.finishAffinity();
@@ -410,7 +404,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
                 if (extras != null) {
                     Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
                     if (trash != null) {
-                        this.trashMarkerMap.remove(trash);
+                        this.trashMarkerMap.getMarker(trash).setVisible(false);
                     }
                 }
             }

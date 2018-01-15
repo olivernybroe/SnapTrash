@@ -1,5 +1,6 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -17,16 +18,33 @@ import dk.snaptrash.snaptrash.Models.Trash;
 @Singleton
 public interface TrashService {
 
-    @NonNull
-    CompletableFuture<Collection<Trash>> closeTo(@NonNull LatLng location);
+    public interface OnTrashAddedListener {
+        public void trashAdded(Trash trash);
+    }
+
+    public interface OnTrashRemovedListener {
+        public void trashRemoved(Trash trash);
+    }
+
+    public interface OnPickUpVerifiedListener {
+        public void pickUpVerified(Trash trash);
+    }
 
     @NonNull
-    CompletableFuture<Trash> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);
+    CompletableFuture<Collection<Trash>> trashes();
 
     @NonNull
-    CompletableFuture<Collection<Trash>> trashInPickupRange(@NonNull LatLng location);
+    CompletableFuture<Void> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);
 
-    @NonNull
-    TrashService addTrashChangeListener(EventListener<Collection<Trash>> eventListener);
+    CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash);
+
+    public void addOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
+    public void removeOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
+
+    public void addOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
+    public void removedOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
+
+    public void addOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
+    public void removeOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
 
 }
