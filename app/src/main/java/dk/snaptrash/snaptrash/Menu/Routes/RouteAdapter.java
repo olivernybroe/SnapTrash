@@ -48,7 +48,7 @@ public class RouteAdapter extends ArrayAdapter<Route> {
                 else {
                     dialog.getActivity().runOnUiThread(() -> {
                         Log.e("RouteAdapter", "failed getting the routes.", throwable);
-                        Toast.makeText(dialog.getActivity(), "Failed connecting to server.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(dialog.getActivity(), R.string.connectionFailed, Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     });
                 }

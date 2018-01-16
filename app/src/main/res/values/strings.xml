@@ -23,5 +23,6 @@
     <string name="StartRecording">Start Recording</string>
     <string name="TrashPickUpVerified">Trash Pickup Verified</string>
     <string name="FailedPickUp">Failed pickup</string>
+    <string name="connectionFailed">Failed connecting to server.</string>
 
 </resources>

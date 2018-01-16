@@ -40,7 +40,7 @@ public class Trash extends Model<Trash> {
         this.location = location;
         this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/IMG_20180110_144336.jpg?alt=media&token=2ff58097-37a5-45d3-8450-cabd65b6b229";
         this.description = description;
-        this.authorId = authorId;
+        this.authorId = authorId == null ? "Cfl8DtrGjIYXOgM5PTOXLXwnCAJ2" : authorId;
         this.reservedById = reservedById;
     }
 

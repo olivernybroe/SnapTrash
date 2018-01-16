@@ -8,25 +8,68 @@ import android.util.Log;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import dk.snaptrash.snaptrash.Models.User;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class FirebaseUserService implements UserService {
 
+    private OkHttpClient client = new OkHttpClient();
+
+    private HttpUrl.Builder urlBuilder(String userId) {
+        return new HttpUrl.Builder()
+            .host("us-central1-snaptrash-1507812289113.cloudfunctions.net")
+            .scheme("https")
+            .addPathSegments("snaptrash/users/")
+            .addPathSegment(userId);
+    }
+
     @Override
-    public CompletableFuture<User> get(String id) {
-        Log.e("userservice", "get user " + id);
-        //todo get actual user
-        return CompletableFuture.supplyAsync(
-            () -> {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                }
-                return new User("asdfasdfsakjfdhlkshj", "xd@dinmor.dk", "lol", ":)");
+    public CompletableFuture<Optional<User>> get(String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            Request request = new Request.Builder()
+                .url(urlBuilder(id).build())
+                .build();
+
+            try {
+                Response response = client.newCall(request).execute();
+                return toUser(new JSONObject(response.body().string()));
+
+            } catch (IOException |JSONException e) {
+                throw new CompletionException(e);
             }
-        );
+        });
+    }
+
+    private static Optional<User> toUser(JSONObject object) {
+        if(object == null) {
+            return Optional.empty();
+        }
+        try {
+            JSONObject data = object.getJSONObject("data");
+
+            return Optional.of(new User(
+                object.getString("id"),
+                data.getString("email"),
+                data.optString("displayName", null),
+                data.getString("pictureUrl")
+            ));
+        } catch (JSONException e) {
+            return Optional.empty();
+        }
     }
 
     @Nullable public static User toUser(@Nullable FirebaseUser user) {

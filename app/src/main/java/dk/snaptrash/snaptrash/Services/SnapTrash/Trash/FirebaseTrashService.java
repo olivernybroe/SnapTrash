@@ -144,7 +144,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             Geo.toLatLng(documentSnapshot.getGeoPoint("location")),
             documentSnapshot.getString("pictureUrl"),
             documentSnapshot.getString("description"),
-            documentSnapshot.getString("authorId"),
+            documentSnapshot.getString("created_by"),
             documentSnapshot.getString("reserved_by"),
             documentSnapshot.getDate("reserved_until")
         ));

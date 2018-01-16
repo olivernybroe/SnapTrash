@@ -9,12 +9,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
 import com.squareup.picasso.Callback;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -112,17 +114,33 @@ implements
         CompletableFuture fetchAuthorName = this.userService.get(this.trash.getAuthorId()).thenAcceptAsync(
             user -> this.getActivity().runOnUiThread(
                 () -> {
-                    TextView textView = view.findViewById(R.id.SnappedByView);
-                    textView.setText(
-                        this.getString(
-                            R.string.SnappedBy,
-                            user.getEmail()
-                        )
-                    );
-                    textView.setVisibility(View.VISIBLE);
+                    if(user.isPresent()) {
+
+                        TextView textView = view.findViewById(R.id.SnappedByView);
+                        textView.setText(
+                            this.getString(
+                                R.string.SnappedBy,
+                                user.get().getUsername() == null ? user.get().getEmail() : user.get().getUsername()
+                            )
+                        );
+                        textView.setVisibility(View.VISIBLE);
+                    }
+                    else {
+                        this.dismiss();
+                        Toast.makeText(this.getActivity(), R.string.connectionFailed, Toast.LENGTH_SHORT).show();
+                    }
+
                 }
             )
-        );
+        ).whenComplete((aVoid, throwable) -> {
+            if(throwable != null) {
+                this.getActivity().runOnUiThread(() -> {
+                    this.dismiss();
+                    Toast.makeText(this.getActivity(), R.string.connectionFailed, Toast.LENGTH_SHORT).show();
+                });
+
+            }
+        });
 
         CompletableFuture fetchTrashCanBePickedUp =
             this.trashService.trashCanBePickedUp(trash).thenAccept(
