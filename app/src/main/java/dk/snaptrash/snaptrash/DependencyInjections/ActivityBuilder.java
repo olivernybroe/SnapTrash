@@ -15,6 +15,7 @@ import dk.snaptrash.snaptrash.SnapTrashApplication;
 import dk.snaptrash.snaptrash.login.LogInFragment;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 import dk.snaptrash.snaptrash.Map.MapActivity;
+import dk.snaptrash.snaptrash.login.SignUpFragment;
 import dk.snaptrash.snaptrash.login.SplashScreenFragment;
 
 @Module(includes = AndroidInjectionModule.class)
@@ -49,5 +50,8 @@ public abstract class ActivityBuilder {
 
     @ContributesAndroidInjector
     abstract ProfileDialog bindProfileDialog();
+
+    @ContributesAndroidInjector
+    abstract SignUpFragment bindSignUpFragment();
 
 }

@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
 
     private ProgressBar progressBar;
     private Button signInButton;
+    private TextView signUp;
 
     @Inject
     AuthProvider auth;
@@ -55,8 +57,10 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
 
         this.signInButton = view.findViewById(R.id.logIn);
         this.progressBar = view.findViewById(R.id.loading);
+        this.signUp = view.findViewById(R.id.signUp);
 
         this.signInButton.setOnClickListener(this);
+        this.signUp.setOnClickListener(this);
 
         return view;
     }
@@ -74,33 +78,36 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        this.working();
-        ((AuthenticationActivity) this.getActivity()).login(
-            "hotshit@xd.ng",
-            ":)))))"
-        )
-            .whenCompleteAsync(
-                (user, throwable) -> {
-                    this.getActivity().runOnUiThread(
-                        () -> {
-                            if (throwable == null) {
-                                this.startActivity(
-                                    new Intent(this.getActivity(), MapActivity.class)
-                                );
-                            } else {
-                                this.idle();
-                                Toast.makeText(
-                                    this.getActivity(),
-                                    "Failed login",
-                                    Toast.LENGTH_SHORT
-                                ).show(); //TODO add actual error handling
-                                Log.e("loginfragment", "pls", throwable);
-                            }
+        if(view == signInButton) {
+            this.working();
+            ((AuthenticationActivity) this.getActivity()).login(
+                "hotshit@xd.ng",
+                ":)))))"
+            ).whenCompleteAsync((user, throwable) -> {
+                this.getActivity().runOnUiThread(
+                    () -> {
+                        if (throwable == null) {
+                            this.startActivity(
+                                new Intent(this.getActivity(), MapActivity.class)
+                            );
+                        } else {
+                            this.idle();
+                            Toast.makeText(
+                                this.getActivity(),
+                                "Failed login",
+                                Toast.LENGTH_SHORT
+                            ).show(); //TODO add actual error handling
+                            Log.e("loginfragment", "pls", throwable);
                         }
-                    );
-                }
-            );
-
+                    }
+                );
+            });
+        } else if(view == signUp) {
+            this.getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.screenView, SignUpFragment.newInstance())
+                .commit();
+        }
     }
 
 }

@@ -66,7 +66,7 @@ public class ProfileDialog extends DialogFragment implements Callback {
         emailView.setText(user.getEmail());
 
         nameView = view.findViewById(R.id.name_view);
-        nameView.setText("Iohan Strässenburg");
+        nameView.setText(user.getUsername() != null ? user.getUsername() : "Iohan Strässenburg");
 
         return view;
     }

@@ -26,6 +26,7 @@ implements
 {
 
     public static final String loginReasonArgument = "LOGIN_REASON";
+    public boolean inSignUp = false;
 
     @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
     @Inject protected AuthProvider auth;
@@ -54,6 +55,9 @@ implements
     @Override
     protected void onStart() {
         super.onStart();
+        if(inSignUp) {
+            return;
+        }
 
         if (this.auth.loggedIn()) {
             Log.e("loginacticity", "already logged in as: " + this.auth.getUser());

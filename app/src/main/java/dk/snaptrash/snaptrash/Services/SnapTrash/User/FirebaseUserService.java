@@ -1,12 +1,17 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.User;
 
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,10 +21,14 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import dk.snaptrash.snaptrash.Models.User;
+import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -52,6 +61,25 @@ public class FirebaseUserService implements UserService {
                 throw new CompletionException(e);
             }
         });
+    }
+
+    @Override
+    public CompletableFuture<User> create(String name, String email, String password, Uri profilePic) {
+        return TaskWrapper.wrapAsync(FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password))
+            .thenApplyAsync(authResult -> {
+                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .setPhotoUri(profilePic)
+                    .build();
+
+                try {
+                    TaskWrapper.wrapAsync(authResult.getUser().updateProfile(profileUpdates)).get();
+                } catch (InterruptedException|ExecutionException e) {
+                   throw new CompletionException(e);
+                }
+                return authResult;
+            })
+            .thenApply(FirebaseUserService::toUser);
     }
 
     private static Optional<User> toUser(JSONObject object) {
