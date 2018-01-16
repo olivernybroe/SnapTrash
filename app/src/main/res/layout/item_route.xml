@@ -24,6 +24,7 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="16dp"
         app:layout_constraintHorizontal_bias="0"
+        android:ellipsize="end"
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="56dp">
@@ -32,7 +33,9 @@
             android:id="@+id/routeTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Route name placeholder"
+            android:text="Route name placeholder fgdgfggfkgjfkdjgkjfdjgkdfjgkdfjkgjdkfgjkfdjgkjdfgjfkdj"
+            android:ellipsize="end"
+            android:maxLines="1"
           />
         <TextView
             android:id="@+id/additional"

@@ -75,13 +75,13 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         TextView title = convertView.findViewById(R.id.routeTitle);
 
         int duration = route.getDirection().getDuration()/60;
-        double length = route.getDirection().getDistance()/1000;
-        Log.e("ROUTE", String.valueOf(length));
+        double length = route.getDirection().getDistance();
 
-        additional.setText(String.format("Length: %s km  Approx: %s",
-            Double.toString(length),
+        additional.setText(String.format("Length: %s, Approx: %s",
+            length >= 1000 ? Math.round(length/1000)+" km" : Math.round(length)+ " m",
             duration >= 100 ? duration/60+" hours" : duration+" minutes"
         ));
+        title.setText(route.getDirection().getDescription());
 
         return convertView;
     }

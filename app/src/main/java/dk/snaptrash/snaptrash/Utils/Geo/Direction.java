@@ -43,6 +43,10 @@ public class Direction {
         return route.getLegList().stream().mapToInt(leg -> Integer.valueOf(leg.getDuration().getValue())).sum();
     }
 
+    public String getDescription() {
+        return route.getSummary();
+    }
+
     public Collection<PolylineOptions> toPolylineOptions(Context context) {
         return this.route.getLegList().stream().map(leg ->
             DirectionConverter.createPolyline(
