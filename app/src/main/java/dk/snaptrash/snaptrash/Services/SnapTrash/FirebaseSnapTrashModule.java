@@ -39,7 +39,7 @@ public class FirebaseSnapTrashModule implements SnapTrashModule {
 
     @Singleton
     @Provides
-    public RouteService provideRouteService() {
-        return new FirebaseRouteService();
+    public RouteService provideRouteService(AuthProvider authProvider, TrashService trashService) {
+        return new FirebaseRouteService(authProvider, (FirebaseTrashService) trashService);
     }
 }

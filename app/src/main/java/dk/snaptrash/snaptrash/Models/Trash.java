@@ -28,7 +28,7 @@ public class Trash extends Model<Trash> {
     @Getter private String pictureUrl;
     @Getter private String description;
     @Getter private String authorId;
-    @Getter @Nullable String pickedUpById;
+    @Getter private String reservedById;
 
     public enum Status {
         SYNCHRONIZED,
@@ -37,20 +37,17 @@ public class Trash extends Model<Trash> {
 
     @Getter@Setter private Status status = Status.SYNCHRONIZED;
 
-    public Trash(String id, Coordinate location, String pictureUrl, String description, String authorId) {
+    public Trash(String id, Coordinate location, String pictureUrl, String description, String authorId, String reservedById) {
         this.id = id;
         this.location = location;
         this.pictureUrl = pictureUrl != null ? pictureUrl : "https://firebasestorage.googleapis.com/v0/b/snaptrash-1507812289113.appspot.com/o/IMG_20180110_144336.jpg?alt=media&token=2ff58097-37a5-45d3-8450-cabd65b6b229";
-        this.pictureUrl = pictureUrl;
         this.description = description;
         this.authorId = authorId;
+        this.reservedById = reservedById;
     }
 
-    public Trash(String id, LatLng location, String pictureUrl, String description, String authorId) {
-        this.id = id;
-        this.location = new Coordinate(location.latitude, location.longitude);
-        this.pictureUrl = pictureUrl;
-        this.description = description;
+    public Trash(String id, LatLng location, String pictureUrl, String description, String authorId, String reservedById) {
+        this(id, new Coordinate(location.latitude, location.longitude), pictureUrl, description, authorId, reservedById);
     }
 
     public void loadPictureInto(ImageView imageView) {

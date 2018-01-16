@@ -13,8 +13,10 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,7 +24,9 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Models.Route;
+import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.FirebaseTrashService;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -31,9 +35,13 @@ import okhttp3.Response;
 public class FirebaseRouteService implements RouteService {
     private OkHttpClient client = new OkHttpClient();
     private static final String TAG = "RouteService";
-
-    @Inject
     AuthProvider auth;
+    FirebaseTrashService trashService;
+
+    public FirebaseRouteService(AuthProvider auth, FirebaseTrashService trashService) {
+        this.auth = auth;
+        this.trashService = trashService;
+    }
 
     private HttpUrl.Builder urlBuilder() {
         return new HttpUrl.Builder()
@@ -77,9 +85,19 @@ public class FirebaseRouteService implements RouteService {
         try {
             return Optional.of(new Route(
                 jsonRoute.getString("id"),
-                null
+                IntStream.range(0, jsonRoute.getJSONObject("data").getJSONArray("trashes").length())
+                    .mapToObj(value -> {
+                        try {
+                            return trashService.toTrash(jsonRoute.getJSONObject("data").getJSONArray("trashes").getJSONObject(0));
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList()),
+                auth.getUser().getId()
             ));
-        } catch (JSONException e) {
+        } catch (JSONException|RuntimeException e) {
             return Optional.empty();
         }
     }
@@ -111,7 +129,28 @@ public class FirebaseRouteService implements RouteService {
             Request request = new Request.Builder()
                 .url(urlBuilder()
                     .addPathSegment(route.getId())
-                    .addPathSegment("activate")
+                    .addPathSegment("reserve")
+                    .build()
+                ).build();
+
+            try {
+                client.newCall(request).execute();
+                return route;
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @NonNull
+    @Override
+    public CompletableFuture<Route> abandonRoute(Route route) {
+        return CompletableFuture.supplyAsync(() -> {
+            Request request = new Request.Builder()
+                .url(urlBuilder()
+                    .addPathSegment(route.getId())
+                    .addPathSegment("unreserve")
                     .build()
                 ).build();
 

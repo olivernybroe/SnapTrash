@@ -79,7 +79,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             .addPathSegments("snaptrash/trashes");
     }
 
-    private Optional<Trash> toTrash(@Nullable JSONObject jsonObject) {
+    public Optional<Trash> toTrash(@Nullable JSONObject jsonObject) {
         if(jsonObject == null) {
             return Optional.empty();
         }
@@ -102,9 +102,10 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             return Optional.of(new Trash(
                 jsonObject.getString("id"),
                 new LatLng(location.getDouble("latitude"), location.getDouble("longitude")),
-                jsonObject.optString("pictureUrl", null),
+                data.optString("pictureUrl", null),
                 data.optString("description"),
-                null
+                data.optString("created_by", null),
+                data.optString("reserved_by", null)
             ));
         } catch (JSONException e) {
             return Optional.empty();
@@ -117,12 +118,14 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         if(documentSnapshot.getGeoPoint("location") == null) {
             return Optional.empty();
         }
+
         return Optional.of(new Trash(
             documentSnapshot.getId(),
             Geo.toLatLng(documentSnapshot.getGeoPoint("location")),
             documentSnapshot.getString("pictureUrl"),
             documentSnapshot.getString("description"),
-            documentSnapshot.getString("authorId")
+            documentSnapshot.getString("authorId"),
+            documentSnapshot.getString("reserved_by")
         ));
     }
 

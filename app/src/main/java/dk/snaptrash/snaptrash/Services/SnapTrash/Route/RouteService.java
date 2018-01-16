@@ -20,4 +20,6 @@ public interface RouteService {
 
     @NonNull CompletableFuture<Route> selectRoute(Route route);
 
+    @NonNull CompletableFuture<Route> abandonRoute(Route route);
+
 }

@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,6 +52,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -63,10 +65,12 @@ import dagger.android.HasFragmentInjector;
 import dk.snaptrash.snaptrash.Map.Trash.TrashDialog;
 import dk.snaptrash.snaptrash.Menu.ProfileDialog;
 import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
+import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.login.LoginActivity;
@@ -76,7 +80,7 @@ public class MapActivity
 implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
     GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
-    Drawer.OnDrawerItemClickListener {
+    Drawer.OnDrawerItemClickListener, RouteDialog.Listener {
 
     private GoogleMap googleMap;
 
@@ -87,8 +91,11 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     private TextView leftSideMenuButton;
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
+    @Inject RouteService routeService;
     private TrashMapMap trashMarkerMap;
     private Location anchhor;
+    private Route currentRoute;
+    private ImageButton hasRouteButton;
 
     private boolean hasSetFirstPosition = false;
 
@@ -112,6 +119,9 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_map);
+
+        this.hasRouteButton = this.findViewById(R.id.hasRouteButton);
+        this.hasRouteButton.setOnClickListener(this);
 
         Log.e("AUTH", auth.toString());
 
@@ -194,44 +204,6 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             this.googleMap,
             getDrawable(R.drawable.trash_icon)
         );
-
-        GoogleDirection.withServerKey(getString(R.string.google_navigation_key))
-            .from(new LatLng(55.730177, 12.397181))
-            .and(new LatLng(55.730917, 12.395164))
-            .and(new LatLng(55.730115, 12.398567))
-            .and(new LatLng(55.730784, 12.397488))
-            .to(new LatLng(55.730177, 12.397181))
-            .transportMode(TransportMode.WALKING)
-            .execute(new DirectionCallback() {
-                @Override
-                public void onDirectionSuccess(Direction direction, String rawBody) {
-                    if(direction.isOK()) {
-                        Log.e("DIRECTION", "is ok");
-                        MapActivity.this.runOnUiThread(() -> {
-
-                            Log.e("DIRECTION", direction.getRouteList().get(0).getLegList().get(0).getEndAddress());
-
-                            direction.getRouteList().get(0).getLegList().stream().map((leg) ->
-                                DirectionConverter.createPolyline(
-                                    MapActivity.this,
-                                    leg.getDirectionPoint(),
-                                    5,
-                                    Color.RED
-                            )).forEach(googleMap::addPolyline);
-                        });
-
-                        // Do something
-                    } else {
-                        Log.e("DIRECTION", "is not ok");
-                        // Do something
-                    }
-                }
-
-                @Override
-                public void onDirectionFailure(Throwable t) {
-                    Log.e("DIRECTION", "is really not ok", t);
-                }
-            });
     }
 
     @Override
@@ -315,7 +287,28 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     public void onClick(View view) {
         if (view == leftSideMenuButton) {
             leftSideMenu.openDrawer();
+        } else if(view == hasRouteButton) {
+            this.onHasRouteButtonClicked();
         }
+    }
+
+    private void onHasRouteButtonClicked() {
+        this.hasRouteButton.setEnabled(false);
+
+        routeService.abandonRoute(this.currentRoute).whenComplete((route1, throwable) -> {
+            if(throwable == null) {
+                this.runOnUiThread(() -> {
+                    this.hasRouteButton.setVisibility(View.INVISIBLE);
+                    Toast.makeText(this, "Route abandoned.", Toast.LENGTH_SHORT).show();
+                });
+            }
+            else {
+                this.runOnUiThread(() -> {
+                    this.hasRouteButton.setEnabled(true);
+                    Toast.makeText(this, "Failed abandoning route.", Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     @Override
@@ -359,7 +352,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
         switch ((int) drawerItem.getIdentifier()) {
             case ROUTE:
-                new RouteDialog().show(getFragmentManager(), "RouteDialog");
+                new RouteDialog().setListener(this).show(getFragmentManager(), "RouteDialog");
                 break;
             case SIGN_OUT:
                 this.auth.signOut();
@@ -411,4 +404,12 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         }
     }
 
+    @Override
+    public void onRouteSelected(Route route) {
+        this.currentRoute = route;
+        this.hasRouteButton.setEnabled(true);
+        this.hasRouteButton.setVisibility(View.VISIBLE);
+
+        Toast.makeText(this, "Route selected, adding to map.", Toast.LENGTH_SHORT).show();
+    }
 }

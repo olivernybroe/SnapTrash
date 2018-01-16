@@ -35,7 +35,7 @@
             android:text="Route name placeholder"
           />
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/additional"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Length: 20km  Approx: 40 minutes"

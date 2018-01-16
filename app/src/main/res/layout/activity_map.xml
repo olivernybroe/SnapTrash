@@ -14,10 +14,8 @@
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:layout_width="match_parent"
@@ -102,6 +100,17 @@
         app:layout_constraintEnd_toEndOf="@id/sideMenuButtonStartBound"
         app:layout_constraintTop_toTopOf="@id/sideMenuButtonUpperBound"
     />
+
+    <ImageButton
+        android:id="@+id/hasRouteButton"
+        android:visibility="invisible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:scaleType="fitCenter"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@drawable/menu_routes_logo"
+        />
 
 </android.support.constraint.ConstraintLayout>
 
