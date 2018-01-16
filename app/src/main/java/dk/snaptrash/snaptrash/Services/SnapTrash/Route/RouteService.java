@@ -16,6 +16,9 @@ public interface RouteService {
     @NonNull
     CompletableFuture<Collection<Route>> getRoutes(LatLng position);
 
+    @NonNull
+    CompletableFuture<Collection<Route>> getRoutesWithDirections(LatLng position);
+
     @NonNull CompletableFuture<Optional<Route>> getCurrentRoute();
 
     @NonNull CompletableFuture<Route> selectRoute(Route route);

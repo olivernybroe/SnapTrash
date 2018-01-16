@@ -14,7 +14,9 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import dk.snaptrash.snaptrash.Map.MapActivity;
@@ -37,7 +39,22 @@ public class Direction {
                 5,
                 Color.RED
             )
-    ).collect(Collectors.toList());
+        ).collect(Collectors.toList());
+    }
+
+    public static CompletableFuture<Optional<Direction>> fromTrashesDefault(Coordinate startAndEndPos, Collection<Trash> trashes) {
+        CompletableFuture<Optional<Direction>> completableFuture = new CompletableFuture<>();
+
+        fromTrashes(startAndEndPos, trashes).whenComplete((directions, throwable) -> {
+            if(throwable == null) {
+                completableFuture.complete(directions.stream().findFirst());
+            }
+            else {
+                completableFuture.completeExceptionally(throwable);
+            }
+        });
+
+        return completableFuture;
     }
 
     public static CompletableFuture<Collection<Direction>> fromTrashes(Coordinate startAndEndPos, Collection<Trash> trashes) {
