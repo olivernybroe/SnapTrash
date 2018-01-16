@@ -2,15 +2,19 @@ package dk.snaptrash.snaptrash.Services.SnapTrash.Route.Routes;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.util.Log;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Polyline;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -25,8 +29,14 @@ import lombok.Getter;
 
 public class MapRoute {
 
-//    public
-//
+    public interface OnRouteFinishedListener {
+        public void routeFinised(MapRoute mapRoute);
+    }
+
+    Set<OnRouteFinishedListener> listeners = Collections.synchronizedSet(
+        new HashSet<>()
+    );
+
     private enum Status {
         IN_PROGRESS,
         COMPLETED,
@@ -54,6 +64,8 @@ public class MapRoute {
         this.googleMap = googleMap;
         this.trashService = trashService;
 
+        Log.e("maproute", "start constructor");
+
         this.trashService.addOnTrashRemovedListener(
             trash -> {
                 Optional<Trash> removedTrash = this.route.getTrashes()
@@ -63,7 +75,7 @@ public class MapRoute {
                 if (removedTrash.isPresent()) {
                     removedTrash.get().setStatus(Trash.Status.PICKED_UP);
                     if (!this.checkCompleted()) {
-                        this.calculateRoute(
+                        this.update(
                             Geo.toCoordinate(
                                 LocationServices.FusedLocationApi.getLastLocation(
                                     MapActivity.googleApiClient
@@ -83,7 +95,7 @@ public class MapRoute {
                     .findAny();
                 if (removedTrash.isPresent()) {
                     removedTrash.get().setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
-                    this.calculateRoute(
+                    this.update(
                         Geo.toCoordinate(
                             LocationServices.FusedLocationApi.getLastLocation(
                                 MapActivity.googleApiClient
@@ -102,7 +114,7 @@ public class MapRoute {
                     .findAny();
                 if (removedTrash.isPresent()) {
                     removedTrash.get().setStatus(Trash.Status.AVAILABLE);
-                    this.calculateRoute(
+                    this.update(
                         Geo.toCoordinate(
                             LocationServices.FusedLocationApi.getLastLocation(
                                 MapActivity.googleApiClient
@@ -114,15 +126,28 @@ public class MapRoute {
         );
     }
 
-    private synchronized CompletableFuture<Void> calculateRoute(Coordinate origin) {
+    public MapRoute addOnRouteFinishedListener(OnRouteFinishedListener onRouteFinishedListener) {
+        this.listeners.add(onRouteFinishedListener);
+        return this;
+    }
+
+    public MapRoute removeOnRouteFinishedListener(OnRouteFinishedListener onRouteFinishedListener) {
+        this.listeners.remove(onRouteFinishedListener);
+        return this;
+    }
+
+    public synchronized CompletableFuture<Void> update(Coordinate origin) {
+        Log.e("maproute", "updating");
+        LinkedHashSet<Trash> trashes = new LinkedHashSet<>(
+            this.route.getTrashes()
+                .stream()
+                .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
+                .collect(Collectors.toList())
+        );
+        Log.e("maproute", trashes.toString());
         return Direction.directionFromTrashes(
             origin,
-            new LinkedHashSet<>(
-                this.route.getTrashes()
-                    .stream()
-                    .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
-                    .collect(Collectors.toList())
-            )
+            trashes
         ).thenAccept(
             direction -> direction.ifPresent(
                     _direction -> this.activity.runOnUiThread(
@@ -147,14 +172,14 @@ public class MapRoute {
                 trash -> trash.getStatus() == Trash.Status.PICKED_UP
             )
         ) {
-            this.finish();
+            this.complete();
             return true;
         } else {
             return false;
         }
     }
 
-    private void unDraw() {
+    private synchronized void unDraw() {
         if (this.polyLines != null) {
             this.activity.runOnUiThread(
                 () -> this.polyLines.forEach(Polyline::remove)
@@ -163,14 +188,28 @@ public class MapRoute {
         this.polyLines = new ArrayList<>();
     }
 
+    private void finish(boolean completed) {
+        this.unDraw();
+        this.status = completed ? Status.COMPLETED : Status.CANCELED;
+        this.listeners.forEach(
+            listeners -> listeners.routeFinised(this)
+        );
+    }
+
     public void cancel() {
-        this.status = Status.CANCELED;
-        this.unDraw();
+        this.finish(false);
     }
 
-    private void finish() {
-        this.status = Status.COMPLETED;
-        this.unDraw();
+    private void complete() {
+        this.finish(true);
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if (this.status == Status.IN_PROGRESS) {
+            Log.w("MapRoute", "Finalizing in progress MapRoute");
+            this.finish(false);
+        }
+    }
 }

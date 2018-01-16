@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -20,11 +19,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.akexorcist.googledirection.DirectionCallback;
-import com.akexorcist.googledirection.GoogleDirection;
-import com.akexorcist.googledirection.constant.TransportMode;
-import com.akexorcist.googledirection.model.Direction;
-import com.akexorcist.googledirection.util.DirectionConverter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -46,12 +40,6 @@ import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import javax.inject.Inject;
 
 import dagger.android.AndroidInjection;
@@ -67,8 +55,10 @@ import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.Routes.MapRoute;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 
 public class MapActivity
@@ -92,6 +82,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     private Location anchhor;
     private Route currentRoute;
     private ImageButton hasRouteButton;
+
+    @Nullable private MapRoute route;
 
     private boolean hasSetFirstPosition = false;
 
@@ -182,7 +174,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         googleMap.setMaxZoomPreference(40);
         googleMap.setMinZoomPreference(20);
-        //googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
         googleMap.setOnMarkerClickListener(this);
         googleMap.setMyLocationEnabled(true);
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -200,6 +192,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             this.googleMap,
             getDrawable(R.drawable.trash_icon)
         );
+
+
     }
 
     @Override
@@ -401,12 +395,32 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 //        }
 //    }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRouteSelected(Route route) {
         this.currentRoute = route;
         this.hasRouteButton.setEnabled(true);
         this.hasRouteButton.setVisibility(View.VISIBLE);
 
-        Toast.makeText(this, "Route selected, adding to map.", Toast.LENGTH_SHORT).show();
+        Log.e("mapactivity", "route selected");
+
+        this.route = new MapRoute(route, this, this.googleMap, this.trashService);
+
+        this.route.addOnRouteFinishedListener(
+            mapRoute -> this.runOnUiThread(
+                () -> Toast.makeText(this, "Route completed!", Toast.LENGTH_SHORT).show()
+            )
+        );
+
+        this.route.update(
+            Geo.toCoordinate(
+                LocationServices
+                    .FusedLocationApi
+                    .getLastLocation(
+                        MapActivity.googleApiClient
+                    )
+            )
+        );
+
     }
 }

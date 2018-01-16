@@ -78,6 +78,12 @@ public class FirebaseRouteService implements RouteService {
         });
     }
 
+    @NonNull
+    @Override
+    public CompletableFuture<Collection<Route>> getRoutesWithDirections(LatLng position) {
+        return null;
+    }
+
     private Optional<Route> toRoute(@Nullable JSONObject jsonRoute) {
         if(jsonRoute == null) {
             return Optional.empty();

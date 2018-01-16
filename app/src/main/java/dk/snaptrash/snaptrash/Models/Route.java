@@ -29,7 +29,7 @@ public class Route extends Model<Route> {
     @Nullable
     private transient Direction direction;
 
-    public Route(String id, Collection<Trash> trashes, String userId) {
+    public Route(String id, LinkedHashSet<Trash> trashes, String userId) {
         Id = id;
         this.trashes = trashes;
         this.userId = userId;
