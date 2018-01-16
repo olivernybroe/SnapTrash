@@ -19,19 +19,19 @@
     <LinearLayout
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        app:layout_constraintStart_toEndOf="@id/imageView"
+        android:paddingStart="56dp"
+        android:paddingEnd="@dimen/dialog_margin_end"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imageView"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="16dp"
-        app:layout_constraintHorizontal_bias="0"
         android:ellipsize="end"
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="56dp">
 
         <TextView
             android:id="@+id/routeTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Route name placeholder fgdgfggfkgjfkdjgkjfdjgkdfjgkdfjkgjdkfgjkfdjgkjdfgjfkdj"
             android:ellipsize="end"
@@ -39,7 +39,7 @@
           />
         <TextView
             android:id="@+id/additional"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Length: 20km  Approx: 40 minutes"
             />
