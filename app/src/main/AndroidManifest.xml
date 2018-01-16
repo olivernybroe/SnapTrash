@@ -33,7 +33,10 @@
         <activity
             android:name=".Map.MapActivity"
             />
-        <activity android:name=".PickUp.PickUpActivity" />
+        <activity android:name=".PickUp.PickUpActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            />
     </application>
 
 </manifest>
