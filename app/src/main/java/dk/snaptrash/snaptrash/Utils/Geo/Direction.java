@@ -28,7 +28,6 @@ public class Direction {
     private Direction(Route route) {
         this.route = route;
     }
-
     public Collection<PolylineOptions> toPolylineOptions(Context context) {
         return this.route.getLegList().stream().map(leg ->
             DirectionConverter.createPolyline(

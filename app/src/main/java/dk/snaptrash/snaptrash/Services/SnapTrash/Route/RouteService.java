@@ -10,14 +10,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import dk.snaptrash.snaptrash.Models.Route;
+import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
 
 public interface RouteService {
 
     @NonNull
-    CompletableFuture<Collection<Route>> getRoutes(LatLng position);
+    CompletableFuture<Collection<Route>> getRoutes(Coordinate position);
 
     @NonNull
-    CompletableFuture<Collection<Route>> getRoutesWithDirections(LatLng position);
+    CompletableFuture<Collection<Route>> getRoutesWithDirections(Coordinate position);
 
     @NonNull CompletableFuture<Optional<Route>> getCurrentRoute();
 
