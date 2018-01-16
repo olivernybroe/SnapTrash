@@ -9,6 +9,9 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
 
+import java.security.Timestamp;
+import java.util.Date;
+
 import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import lombok.Getter;
@@ -22,6 +25,7 @@ public class Trash extends Model<Trash> {
     @Getter private String description;
     @Getter private String authorId;
     @Getter private String reservedById;
+    @Nullable@Getter private Date reservedUntil;
 
     public enum Status {
         AVAILABLE,
@@ -42,6 +46,11 @@ public class Trash extends Model<Trash> {
 
     public Trash(String id, LatLng location, String pictureUrl, String description, String authorId, String reservedById) {
         this(id, new Coordinate(location.latitude, location.longitude), pictureUrl, description, authorId, reservedById);
+    }
+
+    public Trash(String id, LatLng location, String pictureUrl, String description, String authorId, String reservedById, Date reservedUntil) {
+        this(id, new Coordinate(location.latitude, location.longitude), pictureUrl, description, authorId, reservedById);
+        this.reservedUntil = reservedUntil;
     }
 
     public void loadPictureInto(ImageView imageView) {

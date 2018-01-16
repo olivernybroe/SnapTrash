@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +35,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.inject.Inject;
+
 import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import okhttp3.HttpUrl;
@@ -69,15 +74,18 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     private Context context;
 
-    public FirebaseTrashService(Context context) {
+    AuthProvider authProvider;
+
+    @Inject
+    public FirebaseTrashService(Context context, AuthProvider authProvider) {
         this.context = context;
+        this.authProvider = authProvider;
         this.trashCollection().addSnapshotListener(this);
     }
 
     private Query trashCollection() {
         return FirebaseFirestore.getInstance()
-            .collection("trashes")
-            .whereLessThan("reserved_until", new Date());
+            .collection("trashes");
     }
 
     private HttpUrl.Builder urlBuilder() {
@@ -133,7 +141,8 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             documentSnapshot.getString("pictureUrl"),
             documentSnapshot.getString("description"),
             documentSnapshot.getString("authorId"),
-            documentSnapshot.getString("reserved_by")
+            documentSnapshot.getString("reserved_by"),
+            documentSnapshot.getDate("reserved_until")
         ));
     }
 
@@ -323,11 +332,20 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         if(documentSnapshots == null) {
             return;
         }
+        Date now = new Date();
         this.updateTrashes(
             documentSnapshots.getDocuments().stream()
                 .map(this::toTrash)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .filter(
+                    trash ->
+                        (
+                            trash.getReservedUntil() != null
+                            && trash.getReservedUntil().before(now)
+                        )
+                        || Objects.equals(trash.getReservedById(), this.authProvider.getUser().getId())
+                )
                 .collect(Collectors.toSet())
         );
     }

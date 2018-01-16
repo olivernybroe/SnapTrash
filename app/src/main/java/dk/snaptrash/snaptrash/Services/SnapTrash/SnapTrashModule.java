@@ -15,7 +15,7 @@ public interface SnapTrashModule {
 
     UserService provideUserService();
 
-    TrashService provideTrashService(Context context);
+    TrashService provideTrashService(Context context, AuthProvider authProvider);
 
     RouteService provideRouteService(AuthProvider authProvider, TrashService trashService);
 }
