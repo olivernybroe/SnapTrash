@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -31,7 +32,7 @@ public class Direction {
         this.route = route;
     }
 
-    public Collection<PolylineOptions> toPolylines(Context context) {
+    public Collection<PolylineOptions> toPolylineOptions(Context context) {
         return this.route.getLegList().stream().map(leg ->
             DirectionConverter.createPolyline(
                 context,
@@ -42,7 +43,7 @@ public class Direction {
         ).collect(Collectors.toList());
     }
 
-    public static CompletableFuture<Optional<Direction>> fromTrashesDefault(Coordinate startAndEndPos, Collection<Trash> trashes) {
+    public static CompletableFuture<Optional<Direction>> directionFromTrashes(Coordinate startAndEndPos, LinkedHashSet<Trash> trashes) {
         CompletableFuture<Optional<Direction>> completableFuture = new CompletableFuture<>();
 
         fromTrashes(startAndEndPos, trashes).whenComplete((directions, throwable) -> {
@@ -57,11 +58,11 @@ public class Direction {
         return completableFuture;
     }
 
-    public static CompletableFuture<Collection<Direction>> fromTrashes(Coordinate startAndEndPos, Collection<Trash> trashes) {
+    public static CompletableFuture<Collection<Direction>> fromTrashes(Coordinate startAndEndPos, LinkedHashSet<Trash> trashes) {
         return fromTrashes(startAndEndPos, startAndEndPos, trashes);
     }
 
-    public static CompletableFuture<Collection<Direction>> fromTrashes(Coordinate startPos, Coordinate endPos, Collection<Trash> trashes) {
+    public static CompletableFuture<Collection<Direction>> fromTrashes(Coordinate startPos, Coordinate endPos, LinkedHashSet<Trash> trashes) {
         CompletableFuture<Collection<Direction>> completableFuture = new CompletableFuture<>();
 
         GoogleDirection.withServerKey(Resources.getSystem().getString(R.string.google_navigation_key))

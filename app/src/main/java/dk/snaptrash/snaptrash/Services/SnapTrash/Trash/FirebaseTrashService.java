@@ -51,7 +51,15 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         new HashSet<>()
     );
 
+    private Set<OnTrashPickedUpListener> pickedUpListeners = Collections.synchronizedSet(
+        new HashSet<>()
+    );
+
     private Set<OnPickUpVerifiedListener> verifiedListeners = Collections.synchronizedSet(
+        new HashSet<>()
+    );
+
+    private Set<OnPickUpRejectedListener> rejectedListeners = Collections.synchronizedSet(
         new HashSet<>()
     );
 
@@ -131,7 +139,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @NonNull
     @Override
-    public CompletableFuture<Collection<Trash>> trashes() {
+    public CompletableFuture<Set<Trash>> trashes() {
         if (this.trashes != null) {
             return CompletableFuture.completedFuture(
                 new HashSet<>(this.trashes)
@@ -165,6 +173,17 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @NonNull
     @Override
+    public CompletableFuture<Set<Trash>> availableTrashes() {
+        return this.trashes().thenApply(
+            _trashes -> trashes
+                .stream()
+                .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
+                .collect(Collectors.toSet())
+        );
+    }
+
+    @NonNull
+    @Override
     public CompletableFuture<Void> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo) {
         return CompletableFuture.runAsync(
             () -> {
@@ -183,6 +202,9 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 //                        throw new RuntimeException("PICKUP IS NOT A 204 RESPONSE CODE.");
 //                    }
                     trash.setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
+                    this.pickedUpListeners.forEach(
+                        listener -> listener.pickedUp(trash)
+                    );
 //                } catch (IOException e) {
 //                    throw new RuntimeException(e);
 //                }
@@ -234,6 +256,16 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     }
 
     @Override
+    public void addOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener) {
+        this.pickedUpListeners.add(onTrashPickedUpListener);
+    }
+
+    @Override
+    public void removedOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener) {
+        this.pickedUpListeners.remove(onTrashPickedUpListener);
+    }
+
+    @Override
     public void addOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener) {
         this.verifiedListeners.add(onPickUpVerifiedListener);
     }
@@ -241,6 +273,16 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     @Override
     public void removeOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener) {
         this.verifiedListeners.remove(onPickUpVerifiedListener);
+    }
+
+    @Override
+    public void addOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener) {
+        this.rejectedListeners.add(onPickUpRejectedListener);
+    }
+
+    @Override
+    public void removeOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener) {
+        this.rejectedListeners.remove(onPickUpRejectedListener);
     }
 
     private void updateTrashes(Set<Trash> newTrashes) {
@@ -252,6 +294,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
         CollectionUtils.subtract(currentTrashes, newTrashes).forEach(
             trash -> {
+                trash.setStatus(Trash.Status.PICKED_UP);
                 this.trashes.remove(trash);
                 this.removedListeners.forEach(
                     listener -> listener.trashRemoved(trash)
@@ -266,6 +309,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                     listener -> listener.trashAdded(trash)
                 );
                 if (trash.getStatus() == Trash.Status.PENDING_REMOVAL_CONFIRMED) {
+                    trash.setStatus(Trash.Status.PICKED_UP);
                     this.verifiedListeners.forEach(
                         listener -> listener.pickUpVerified(trash)
                     );

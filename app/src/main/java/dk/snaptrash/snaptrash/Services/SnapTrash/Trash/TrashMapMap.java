@@ -34,8 +34,10 @@ public class TrashMapMap {
 
         trashService.addOnTrashAddedListener(this::put);
         trashService.addOnTrashRemovedListener(this::remove);
+        trashService.addOnTrashPickedUpListener(this::remove);
+        trashService.addOnPickUpRejectedListener(this::put);
 
-        trashService.trashes().thenAcceptAsync(
+        trashService.availableTrashes().thenAcceptAsync(
             trashes -> trashes.forEach(this::put)
         );
     }

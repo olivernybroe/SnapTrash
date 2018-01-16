@@ -1,7 +1,6 @@
 package dk.snaptrash.snaptrash.Models;
 
 import android.content.Context;
-import android.location.Location;
 import android.support.annotation.Nullable;
 import android.widget.ImageView;
 
@@ -9,12 +8,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
@@ -31,11 +24,12 @@ public class Trash extends Model<Trash> {
     @Getter private String reservedById;
 
     public enum Status {
-        SYNCHRONIZED,
-        PENDING_REMOVAL_CONFIRMED
+        AVAILABLE,
+        PENDING_REMOVAL_CONFIRMED,
+        PICKED_UP
     }
 
-    @Getter@Setter private Status status = Status.SYNCHRONIZED;
+    @Getter@Setter private Status status = Status.AVAILABLE;
 
     public Trash(String id, Coordinate location, String pictureUrl, String description, String authorId, String reservedById) {
         this.id = id;

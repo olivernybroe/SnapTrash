@@ -1,26 +1,32 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Route.Routes;
 
-import android.graphics.Color;
-import android.util.Log;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 
-import com.akexorcist.googledirection.DirectionCallback;
-import com.akexorcist.googledirection.GoogleDirection;
-import com.akexorcist.googledirection.constant.TransportMode;
-import com.akexorcist.googledirection.model.Direction;
-import com.akexorcist.googledirection.util.DirectionConverter;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.Polyline;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import dk.snaptrash.snaptrash.Map.MapActivity;
 import dk.snaptrash.snaptrash.Models.Route;
-import dk.snaptrash.snaptrash.R;
+import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
+import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
+import dk.snaptrash.snaptrash.Utils.Geo.Direction;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import lombok.Getter;
 
 public class MapRoute {
 
+//    public
+//
     private enum Status {
         IN_PROGRESS,
         COMPLETED,
@@ -31,67 +37,140 @@ public class MapRoute {
 
     private Route route;
     private GoogleMap googleMap;
+    private Activity activity;
+    private TrashService trashService;
 
-    private List<Polygon> polygons;
+    private List<Polyline> polyLines;
 
-    public MapRoute(GoogleMap googleMap, String serverKey) {
+    @SuppressLint("MissingPermission")
+    public MapRoute(
+        Route route,
+        Activity activity,
+        GoogleMap googleMap,
+        TrashService trashService
+    ) {
+        this.route = route;
+        this.activity = activity;
         this.googleMap = googleMap;
+        this.trashService = trashService;
 
+        this.trashService.addOnTrashRemovedListener(
+            trash -> {
+                Optional<Trash> removedTrash = this.route.getTrashes()
+                    .stream()
+                    .filter(_trash -> _trash == trash)
+                    .findAny();
+                if (removedTrash.isPresent()) {
+                    removedTrash.get().setStatus(Trash.Status.PICKED_UP);
+                    if (!this.checkCompleted()) {
+                        this.calculateRoute(
+                            Geo.toCoordinate(
+                                LocationServices.FusedLocationApi.getLastLocation(
+                                    MapActivity.googleApiClient
+                                )
+                            )
+                        );
+                    }
+                }
+            }
+        );
+
+        this.trashService.addOnTrashPickedUpListener(
+            trash -> {
+                Optional<Trash> removedTrash = this.route.getTrashes()
+                    .stream()
+                    .filter(_trash -> _trash == trash)
+                    .findAny();
+                if (removedTrash.isPresent()) {
+                    removedTrash.get().setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
+                    this.calculateRoute(
+                        Geo.toCoordinate(
+                            LocationServices.FusedLocationApi.getLastLocation(
+                                MapActivity.googleApiClient
+                            )
+                        )
+                    );
+                }
+            }
+        );
+
+        this.trashService.addOnPickUpRejectedListener(
+            trash -> {
+                Optional<Trash> removedTrash = this.route.getTrashes()
+                    .stream()
+                    .filter(_trash -> _trash == trash)
+                    .findAny();
+                if (removedTrash.isPresent()) {
+                    removedTrash.get().setStatus(Trash.Status.AVAILABLE);
+                    this.calculateRoute(
+                        Geo.toCoordinate(
+                            LocationServices.FusedLocationApi.getLastLocation(
+                                MapActivity.googleApiClient
+                            )
+                        )
+                    );
+                }
+            }
+        );
     }
 
-    private void calculateRoute() {
-
-//        GoogleDirection.withServerKey(serverKey)
-//            .from(new LatLng(55.730177, 12.397181))
-//            .and(new LatLng(55.730917, 12.395164))
-//            .and(new LatLng(55.730115, 12.398567))
-//            .and(new LatLng(55.730784, 12.397488))
-//            .to(new LatLng(55.730177, 12.397181))
-//            .transportMode(TransportMode.WALKING)
-//            .execute(new DirectionCallback() {
-//                @Override
-//                public void onDirectionSuccess(Direction direction, String rawBody) {
-//                    if(direction.isOK()) {
-//                        Log.e("DIRECTION", "is ok");
-//                        MapActivity.this.runOnUiThread(() -> {
-//
-//                            Log.e("DIRECTION", direction.getRouteList().get(0).getLegList().get(0).getEndAddress());
-//
-//                            direction.getRouteList().get(0).getLegList().stream().map((leg) ->
-//                                DirectionConverter.createPolyline(
-//                                    MapActivity.this,
-//                                    leg.getDirectionPoint(),
-//                                    5,
-//                                    Color.RED
-//                                )).forEach(googleMap::addPolyline);
-//                        });
-//
-//                        // Do something
-//                    } else {
-//                        Log.e("DIRECTION", "is not ok");
-//                        // Do something
-//                    }
-//                }
-//
-//                @Override
-//                public void onDirectionFailure(Throwable t) {
-//                    Log.e("DIRECTION", "is really not ok", t);
-//                }
-//            });
+    private synchronized CompletableFuture<Void> calculateRoute(Coordinate origin) {
+        return Direction.directionFromTrashes(
+            origin,
+            new LinkedHashSet<>(
+                this.route.getTrashes()
+                    .stream()
+                    .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
+                    .collect(Collectors.toList())
+            )
+        ).thenAccept(
+            direction -> direction.ifPresent(
+                    _direction -> this.activity.runOnUiThread(
+                    () -> {
+                        this.unDraw();
+                        _direction
+                            .toPolylineOptions(this.activity)
+                            .forEach(
+                                polylineOptions -> MapRoute.this.polyLines.add(
+                                    MapRoute.this.googleMap.addPolyline(polylineOptions)
+                                )
+                            );
+                    }
+                )
+            )
+        );
     }
 
-    private void end() {
-        this.polygons.forEach(Polygon::remove);
+    private boolean checkCompleted() {
+        if (
+            this.route.getTrashes().stream().allMatch(
+                trash -> trash.getStatus() == Trash.Status.PICKED_UP
+            )
+        ) {
+            this.finish();
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public void remove() {
+    private void unDraw() {
+        if (this.polyLines != null) {
+            this.activity.runOnUiThread(
+                () -> this.polyLines.forEach(Polyline::remove)
+            );
+        }
+        this.polyLines = new ArrayList<>();
+    }
+
+    public void cancel() {
         this.status = Status.CANCELED;
-        this.end();
+        this.unDraw();
     }
 
-    public void finish() {
+    private void finish() {
         this.status = Status.COMPLETED;
-        this.end();
+        this.unDraw();
     }
 
 }

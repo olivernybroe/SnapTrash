@@ -4,7 +4,10 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import org.apache.commons.collections4.set.ListOrderedSet;
+
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.stream.Collectors;
@@ -19,7 +22,7 @@ public class Route extends Model<Route> {
     @NonNull@Getter
     String Id;
     @NonNull@Getter
-    Collection<Trash> trashes;
+    LinkedHashSet<Trash> trashes;
     @NonNull@Getter
     String userId;
 

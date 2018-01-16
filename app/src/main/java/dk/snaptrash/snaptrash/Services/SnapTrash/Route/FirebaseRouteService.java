@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -85,7 +86,8 @@ public class FirebaseRouteService implements RouteService {
         try {
             return Optional.of(new Route(
                 jsonRoute.getString("id"),
-                IntStream.range(0, jsonRoute.getJSONObject("data").getJSONArray("trashes").length())
+                new LinkedHashSet<>(
+                    IntStream.range(0, jsonRoute.getJSONObject("data").getJSONArray("trashes").length())
                     .mapToObj(value -> {
                         try {
                             return trashService.toTrash(jsonRoute.getJSONObject("data").getJSONArray("trashes").getJSONObject(0));
@@ -94,7 +96,8 @@ public class FirebaseRouteService implements RouteService {
                         }
                     }).filter(Optional::isPresent)
                     .map(Optional::get)
-                    .collect(Collectors.toList()),
+                    .collect(Collectors.toList())
+                ),
                 auth.getUser().getId()
             ));
         } catch (JSONException|RuntimeException e) {

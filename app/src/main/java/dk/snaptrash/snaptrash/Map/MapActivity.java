@@ -24,8 +24,6 @@ import com.akexorcist.googledirection.DirectionCallback;
 import com.akexorcist.googledirection.GoogleDirection;
 import com.akexorcist.googledirection.constant.TransportMode;
 import com.akexorcist.googledirection.model.Direction;
-import com.akexorcist.googledirection.model.Leg;
-import com.akexorcist.googledirection.model.Step;
 import com.akexorcist.googledirection.util.DirectionConverter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -38,8 +36,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
@@ -85,7 +81,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     private GoogleMap googleMap;
 
     @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
-    public static GoogleApiClient mGoogleApiClient;
+    public static GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
     private Drawer leftSideMenu;
     private TextView leftSideMenuButton;
@@ -126,7 +122,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         Log.e("AUTH", auth.toString());
 
         // Create the Google Api Client with location services.
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
+        googleApiClient = new GoogleApiClient.Builder(this)
             .addConnectionCallbacks(this)
             .addOnConnectionFailedListener(this)
             .addApi(LocationServices.API)
@@ -221,19 +217,19 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         ) {
             return;
         }
-        this.onLocationChanged(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient));
+        this.onLocationChanged(LocationServices.FusedLocationApi.getLastLocation(googleApiClient));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mGoogleApiClient.connect();
+        googleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mGoogleApiClient.disconnect();
+        googleApiClient.disconnect();
     }
 
     @Override
@@ -248,12 +244,12 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
                 .setFastestInterval(500)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, locationRequest, this);
+            googleApiClient, locationRequest, this);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        mGoogleApiClient.connect();
+        googleApiClient.connect();
     }
 
     @Override
@@ -328,7 +324,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
                 Log.e("mapactivity", "user wants to pick up trash");
                 Intent intent = new Intent(this, PickUpActivity.class);
                 intent.putExtra(PickUpActivity.trashParameter, trash);
-                MapActivity.this.startActivityForResult(intent, PickUpActivity.PICK_UP_CODE);
+//                MapActivity.this.startActivityForResult(intent, PickUpActivity.PICK_UP_CODE);
+                MapActivity.this.startActivity(intent);
             }
         );
 
@@ -388,21 +385,21 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         this.finishAffinity();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PickUpActivity.PICK_UP_CODE) {
-            if (resultCode == Activity.RESULT_OK) {
-                Bundle extras = data.getExtras();
-                if (extras != null) {
-                    Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
-                    if (trash != null) {
-                        this.trashMarkerMap.getMarker(trash).setVisible(false);
-                    }
-                }
-            }
-        }
-    }
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == PickUpActivity.PICK_UP_CODE) {
+//            if (resultCode == Activity.RESULT_OK) {
+//                Bundle extras = data.getExtras();
+//                if (extras != null) {
+//                    Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
+//                    if (trash != null) {
+//                        this.trashMarkerMap.getMarker(trash).setVisible(false);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public void onRouteSelected(Route route) {

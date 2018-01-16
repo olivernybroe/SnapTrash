@@ -9,6 +9,7 @@ import com.google.firebase.firestore.EventListener;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Singleton;
@@ -26,16 +27,28 @@ public interface TrashService {
         public void trashRemoved(Trash trash);
     }
 
+    public interface OnTrashPickedUpListener {
+        public void pickedUp(Trash trash);
+    }
+
     public interface OnPickUpVerifiedListener {
         public void pickUpVerified(Trash trash);
     }
 
+    public interface OnPickUpRejectedListener {
+        public void pickUpRejected(Trash trash);
+    }
+
     @NonNull
-    CompletableFuture<Collection<Trash>> trashes();
+    CompletableFuture<Set<Trash>> trashes();
+
+    @NonNull
+    CompletableFuture<Set<Trash>> availableTrashes();
 
     @NonNull
     CompletableFuture<Void> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);
 
+    @NonNull
     CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash);
 
     public void addOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
@@ -44,7 +57,13 @@ public interface TrashService {
     public void addOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
     public void removedOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
 
+    public void addOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
+    public void removedOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
+
     public void addOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
     public void removeOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
+
+    public void addOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
+    public void removeOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
 
 }

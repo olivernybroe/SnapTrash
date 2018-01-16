@@ -43,4 +43,14 @@ public class Geo {
         return new LatLng(coordinate.getLatitude(), coordinate.getLongtitude());
     }
 
+    @NonNull
+    public static Coordinate toCoordinate(Location location) {
+        return new Coordinate(location.getLatitude(), location.getLongitude());
+    }
+
+    @NonNull
+    public static Coordinate toCoordinate(LatLng latLng) {
+        return new Coordinate(latLng.latitude, latLng.longitude);
+    }
+
 }
