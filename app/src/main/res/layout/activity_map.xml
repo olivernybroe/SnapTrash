@@ -10,7 +10,7 @@
     <RelativeLayout
         android:id="@+id/skyLayout"
         android:layout_width="match_parent"
-
+        android:visibility="invisible"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,7 +38,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/skyLayout">
+        app:layout_constraintTop_toBottomOf="@id/skyLayout"
+        android:visibility="invisible"
+        >
 
         <fragment
             android:id="@+id/map"
@@ -110,6 +112,19 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:src="@drawable/menu_routes_logo"
+        />
+
+    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:mpb_progressStyle="circular"
+        app:mpb_determinateCircularProgressStyle="dynamic"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:mpb_showProgressBackground="true"
+        android:id="@+id/loadMapProgress"
         />
 
 </android.support.constraint.ConstraintLayout>

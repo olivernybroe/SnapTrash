@@ -1,11 +1,8 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Route;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,24 +12,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.FirebaseTrashService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
 import dk.snaptrash.snaptrash.Utils.Geo.Direction;
 import okhttp3.HttpUrl;
@@ -56,7 +48,7 @@ public class FirebaseRouteService implements RouteService {
             .host("us-central1-snaptrash-1507812289113.cloudfunctions.net")
             .scheme("https")
             .addPathSegments("snaptrash/users/")
-            .addPathSegment("qI68ry3rTCVv9CbujcfCF9PeP263") //TODO: add user id
+            .addPathSegment(auth.getUser().getId())
             .addPathSegment("routes");
     }
 
@@ -71,7 +63,14 @@ public class FirebaseRouteService implements RouteService {
 
             try {
                 Response response = client.newCall(request).execute();
+
+                if (response.code() == 403) {
+                    throw new CompletionException(new RouteInProgressException());
+                }
+
                 JSONArray jsonArray = new JSONArray(response.body().string());
+
+                Log.e("routeservice", "Routes length: " + String.valueOf(jsonArray.length()));
 
                 return IntStream.range(0, jsonArray.length())
                     .mapToObj(i -> toRoute(jsonArray.optJSONObject(i)))
@@ -79,9 +78,10 @@ public class FirebaseRouteService implements RouteService {
                     .map(Optional::get)
                     .collect(Collectors.toList());
 
-            } catch (IOException |JSONException e) {
+            } catch (IOException | JSONException e) {
                 throw new CompletionException(e);
             }
+
         });
     }
 
@@ -98,16 +98,14 @@ public class FirebaseRouteService implements RouteService {
                             route.setDirection(Direction.directionFromTrashes(position, route.getTrashes()).get());
                             completableRoutes.add(route);
                             return route;
-                        } catch (InterruptedException|ExecutionException e) {
-                            completableRoutes.add(route);
-                            return route;
+                        } catch (InterruptedException | ExecutionException e) {
+                            throw new CompletionException(e);
                         }
                     })).toArray((IntFunction<CompletableFuture<Route>[]>) CompletableFuture[]::new)
                 ).get();
             } catch (InterruptedException|ExecutionException e) {
-                throw new RuntimeException(e);
+                throw new CompletionException(e);
             }
-
             return completableRoutes;
         });
     }
@@ -118,23 +116,41 @@ public class FirebaseRouteService implements RouteService {
         }
 
         try {
-            return Optional.of(new Route(
-                jsonRoute.getString("id"),
-                new LinkedHashSet<>(
-                    IntStream.range(0, jsonRoute.getJSONObject("data").getJSONArray("trashes").length())
-                    .mapToObj(value -> {
-                        try {
-                            return trashService.toTrash(jsonRoute.getJSONObject("data").getJSONArray("trashes").getJSONObject(0));
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList())
-                ),
-                auth.getUser().getId()
-            ));
+            return Optional.of(
+                new Route(
+                    jsonRoute.getString("id"),
+                    new LinkedHashSet<>(
+                        IntStream.range(
+                            0,
+                            jsonRoute
+                                .getJSONObject("data")
+                                .getJSONArray("trashes")
+                                .length()
+                        )
+                            .mapToObj(
+                                value -> {
+                                    try {
+                                        return trashService
+                                            .toTrash(
+                                                jsonRoute
+                                                    .getJSONObject("data")
+                                                    .getJSONArray("trashes")
+                                                    .getJSONObject(value)
+                                            );
+                                    } catch (JSONException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            )
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .collect(Collectors.toList())
+                    ),
+                    auth.getUser().getId()
+                )
+            );
         } catch (JSONException|RuntimeException e) {
+            Log.e("routeservice", "rip", e);
             return Optional.empty();
         }
     }
@@ -151,9 +167,14 @@ public class FirebaseRouteService implements RouteService {
 
             try {
                 Response response = client.newCall(request).execute();
-                return toRoute(new JSONObject(response.body().string()));
-
-            } catch (IOException|JSONException e) {
+                return this.toRoute(
+                    new JSONObject(
+                        response
+                            .body()
+                            .string()
+                    )
+                );
+            } catch (IOException | JSONException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -172,9 +193,17 @@ public class FirebaseRouteService implements RouteService {
 
             try {
                 client.newCall(request).execute();
+                route.getTrashes().forEach(
+                    trash -> {
+                        Log.e("routeservice", "reserving: " + trash.getId());
+                        this.trashService.setTrashState(trash, TrashService.TrashState.RESERVED);
+                    }
+                );
                 return route;
 
-            } catch (IOException e) {
+            } catch (Throwable e) {
+//                IOException
+                Log.e("routeservice", "selectroute rekked", e);
                 throw new RuntimeException(e);
             }
         });
@@ -193,6 +222,12 @@ public class FirebaseRouteService implements RouteService {
 
             try {
                 client.newCall(request).execute();
+                route.getTrashes().forEach(
+                    trash -> {
+                        Log.e("routeservice", "abandoning: " + trash.getAuthorId());
+                        this.trashService.setTrashState(trash, TrashService.TrashState.FREE);
+                    }
+                );
                 return route;
 
             } catch (IOException e) {

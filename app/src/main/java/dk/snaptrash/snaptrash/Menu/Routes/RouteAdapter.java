@@ -14,8 +14,13 @@ import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.concurrent.CompletionException;
+
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteInProgressException;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 
@@ -44,13 +49,23 @@ public class RouteAdapter extends ArrayAdapter<Route> {
                             progressBar.setVisibility(View.INVISIBLE);
                         }
                     });
-                }
-                else {
-                    dialog.getActivity().runOnUiThread(() -> {
-                        Log.e("RouteAdapter", "failed getting the routes.", throwable);
-                        Toast.makeText(dialog.getActivity(), R.string.connectionFailed, Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    });
+                } else {
+                    try {
+                        throw throwable.getCause();
+                    } catch (RouteInProgressException e ) {
+                        Log.e("RouteAdaptor", Arrays.toString(throwable.getSuppressed()));
+                        dialog.getActivity().runOnUiThread(() -> {
+                            Toast.makeText(dialog.getActivity(), R.string.RouteAlreadyInProgress, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        });
+                    } catch (Throwable e) {
+                        dialog.getActivity().runOnUiThread(() -> {
+                            Log.e("RouteAdapter", "failed getting the routes.", throwable);
+                            Log.e("RouteAdapter", throwable.getClass().getName());
+                            Toast.makeText(dialog.getActivity(), R.string.FailedConnectingToServer, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        });
+                    }
                 }
             });
         }).addOnFailureListener(e -> {
@@ -75,7 +90,7 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         TextView additional = convertView.findViewById(R.id.additional);
         TextView title = convertView.findViewById(R.id.routeTitle);
 
-        int duration = route.getDirection().getDuration()/60;
+        int duration = route.getDirection().getDuration() / 60;
         double length = route.getDirection().getDistance();
 
         additional.setText(String.format("Length: %s, Approx: %s",

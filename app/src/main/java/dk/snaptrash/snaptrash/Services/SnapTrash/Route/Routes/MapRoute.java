@@ -9,11 +9,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Polyline;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -30,14 +29,14 @@ import lombok.Getter;
 public class MapRoute {
 
     public interface OnRouteFinishedListener {
-        public void routeFinised(MapRoute mapRoute);
+        void routeFinished(MapRoute mapRoute);
     }
 
-    Set<OnRouteFinishedListener> listeners = Collections.synchronizedSet(
+    private Set<OnRouteFinishedListener> listeners = Collections.synchronizedSet(
         new HashSet<>()
     );
 
-    private enum Status {
+    public enum Status {
         IN_PROGRESS,
         COMPLETED,
         CANCELED
@@ -45,12 +44,12 @@ public class MapRoute {
 
     @Getter private Status status = Status.IN_PROGRESS;
 
-    private Route route;
+    @Getter private Route route;
     private GoogleMap googleMap;
     private Activity activity;
     private TrashService trashService;
 
-    private List<Polyline> polyLines;
+    private Collection<Polyline> polyLines;
 
     @SuppressLint("MissingPermission")
     public MapRoute(
@@ -64,16 +63,9 @@ public class MapRoute {
         this.googleMap = googleMap;
         this.trashService = trashService;
 
-        Log.e("maproute", "start constructor");
-
         this.trashService.addOnTrashRemovedListener(
             trash -> {
-                Optional<Trash> removedTrash = this.route.getTrashes()
-                    .stream()
-                    .filter(_trash -> _trash == trash)
-                    .findAny();
-                if (removedTrash.isPresent()) {
-                    removedTrash.get().setStatus(Trash.Status.PICKED_UP);
+                if (this.route.getTrashes().contains(trash)) {
                     if (!this.checkCompleted()) {
                         this.update(
                             Geo.toCoordinate(
@@ -89,12 +81,7 @@ public class MapRoute {
 
         this.trashService.addOnTrashPickedUpListener(
             trash -> {
-                Optional<Trash> removedTrash = this.route.getTrashes()
-                    .stream()
-                    .filter(_trash -> _trash == trash)
-                    .findAny();
-                if (removedTrash.isPresent()) {
-                    removedTrash.get().setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
+                if (this.route.getTrashes().contains(trash)) {
                     this.update(
                         Geo.toCoordinate(
                             LocationServices.FusedLocationApi.getLastLocation(
@@ -108,12 +95,7 @@ public class MapRoute {
 
         this.trashService.addOnPickUpRejectedListener(
             trash -> {
-                Optional<Trash> removedTrash = this.route.getTrashes()
-                    .stream()
-                    .filter(_trash -> _trash == trash)
-                    .findAny();
-                if (removedTrash.isPresent()) {
-                    removedTrash.get().setStatus(Trash.Status.AVAILABLE);
+                if (this.route.getTrashes().contains(trash)) {
                     this.update(
                         Geo.toCoordinate(
                             LocationServices.FusedLocationApi.getLastLocation(
@@ -137,14 +119,26 @@ public class MapRoute {
     }
 
     public synchronized CompletableFuture<Void> update(Coordinate origin) {
-        Log.e("maproute", "updating");
+        if (this.status != Status.IN_PROGRESS) {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            future.completeExceptionally(new Exception());
+            return future;
+        }
+        Log.e("maproute", "updating for: " + this.route.getTrashes().stream().map(trash -> this.trashService.getTrashState(trash)).collect(Collectors.toSet()));
         LinkedHashSet<Trash> trashes = new LinkedHashSet<>(
             this.route.getTrashes()
                 .stream()
-                .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
+                .filter(
+                    trash -> {
+                        TrashService.TrashState state = this.trashService.getTrashState(trash);
+                        return
+                            state == TrashService.TrashState.FREE
+                            || state == TrashService.TrashState.RESERVED;
+                    }
+                )
                 .collect(Collectors.toList())
         );
-        Log.e("maproute", trashes.toString());
+        Log.e("maproute", "updating for: " + trashes);
         return Direction.directionFromTrashes(
             origin,
             trashes
@@ -169,7 +163,7 @@ public class MapRoute {
     private boolean checkCompleted() {
         if (
             this.route.getTrashes().stream().allMatch(
-                trash -> trash.getStatus() == Trash.Status.PICKED_UP
+                trash -> this.trashService.getTrashState(trash) == TrashService.TrashState.PICKED_UP
             )
         ) {
             this.complete();
@@ -188,11 +182,14 @@ public class MapRoute {
         this.polyLines = new ArrayList<>();
     }
 
-    private void finish(boolean completed) {
+    private synchronized void finish(boolean completed) {
+        if (this.status != Status.IN_PROGRESS) {
+            return;
+        }
         this.unDraw();
         this.status = completed ? Status.COMPLETED : Status.CANCELED;
         this.listeners.forEach(
-            listeners -> listeners.routeFinised(this)
+            listeners -> listeners.routeFinished(this)
         );
     }
 
@@ -204,12 +201,5 @@ public class MapRoute {
         this.finish(true);
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (this.status == Status.IN_PROGRESS) {
-            Log.w("MapRoute", "Finalizing in progress MapRoute");
-            this.finish(false);
-        }
-    }
+
 }

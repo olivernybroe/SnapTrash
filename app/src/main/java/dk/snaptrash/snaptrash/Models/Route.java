@@ -70,4 +70,13 @@ public class Route extends Model<Route> {
     public Direction getDirection() {
         return direction;
     }
+
+    @Override
+    public String toString() {
+        return "Route{" +
+            "Id='" + Id + '\'' +
+            ", trashes=" + trashes +
+            ", userId='" + userId + '\'' +
+            '}';
+    }
 }

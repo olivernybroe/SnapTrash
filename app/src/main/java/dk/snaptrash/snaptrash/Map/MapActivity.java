@@ -60,6 +60,7 @@ import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.login.LoginActivity;
+import lombok.Getter;
 
 public class MapActivity
     extends Activity
@@ -78,9 +79,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
     @Inject RouteService routeService;
-    private TrashMapMap trashMarkerMap;
+    @Getter private TrashMapMap trashMarkerMap;
     private Location anchhor;
-    private Route currentRoute;
     private ImageButton hasRouteButton;
 
     @Nullable private MapRoute route;
@@ -193,6 +193,9 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             getDrawable(R.drawable.trash_icon)
         );
 
+        this.routeService.getCurrentRoute().thenAccept(
+            _route -> _route.ifPresent(this::setRoute)
+        );
 
     }
 
@@ -228,8 +231,17 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1000);
+        if (
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                1000
+            );
             return;
         }
 
@@ -261,14 +273,20 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         if(!hasSetFirstPosition) {
             Log.e("mapactivity", "new pos");
             hasSetFirstPosition = true;
-            googleMap.animateCamera(CameraUpdateFactory.newLatLng(
+            this.findViewById(R.id.mapLayout).setVisibility(View.VISIBLE);
+            this.findViewById(R.id.skyLayout).setVisibility(View.VISIBLE);
+            this.findViewById(R.id.loadMapProgress).setVisibility(View.GONE);
+            googleMap.moveCamera(CameraUpdateFactory.newLatLng(
                 new LatLng(location.getLatitude(), location.getLongitude())
             ));
         }
         if (this.anchhor == null || this.anchhor.distanceTo(location) >= 100) {
             Log.e("mapactivity", "new anchor");
             this.anchhor = location;
-            this.trashService.trashes();
+//            this.trashService.trashes();
+        }
+        if (this.route != null) {
+            this.route.update(Geo.toCoordinate(location));
         }
 
     }
@@ -283,48 +301,28 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     }
 
     private void onHasRouteButtonClicked() {
-        this.hasRouteButton.setEnabled(false);
-
-        routeService.abandonRoute(this.currentRoute).whenComplete((route1, throwable) -> {
-            if(throwable == null) {
-                this.runOnUiThread(() -> {
-                    this.hasRouteButton.setVisibility(View.INVISIBLE);
-                    Toast.makeText(this, "Route abandoned.", Toast.LENGTH_SHORT).show();
-                });
-            }
-            else {
-                this.runOnUiThread(() -> {
-                    this.hasRouteButton.setEnabled(true);
-                    Toast.makeText(this, "Failed abandoning route.", Toast.LENGTH_SHORT).show();
-                });
-            }
-        });
+        if (this.route != null) {
+            this.route.cancel();
+        }
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
         Log.d("MarkerClicked", "CLICKED");
-
         Trash trash = this.trashMarkerMap.getTrash(marker);
-
         Log.e("mapactivity", String.valueOf(trash == null));
-
         TrashDialog trashDialog = TrashDialog.newInstance(
             trash
         );
-
         trashDialog.setOnUserInitiastesPickUpListener(
             pickedUp -> {
                 Log.e("mapactivity", "user wants to pick up trash");
                 Intent intent = new Intent(this, PickUpActivity.class);
                 intent.putExtra(PickUpActivity.trashParameter, trash);
-//                MapActivity.this.startActivityForResult(intent, PickUpActivity.PICK_UP_CODE);
                 MapActivity.this.startActivity(intent);
             }
         );
-
         trashDialog.show(this.getFragmentManager(), "TrashInfo");
-
         return true;
     }
 
@@ -396,19 +394,49 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 //    }
 
     @SuppressLint("MissingPermission")
-    @Override
-    public void onRouteSelected(Route route) {
-        this.currentRoute = route;
-        this.hasRouteButton.setEnabled(true);
-        this.hasRouteButton.setVisibility(View.VISIBLE);
+    private void setRoute(Route route) {
+        if (this.route != null) {
+            return;
+        }
+        Log.e("mapactivity", "set route here");
 
-        Log.e("mapactivity", "route selected");
+        this.runOnUiThread(
+            () -> {
+                this.hasRouteButton.setEnabled(true);
+                this.hasRouteButton.setVisibility(View.VISIBLE);
+            }
+        );
 
-        this.route = new MapRoute(route, this, this.googleMap, this.trashService);
+        this.route = new MapRoute(
+            route,
+            this,
+            this.googleMap,
+            this.trashService
+        );
 
         this.route.addOnRouteFinishedListener(
             mapRoute -> this.runOnUiThread(
-                () -> Toast.makeText(this, "Route completed!", Toast.LENGTH_SHORT).show()
+                () -> {
+                    Log.e("mapactivity", "finish route");
+
+                    this.hasRouteButton.setEnabled(false);
+                    this.hasRouteButton.setVisibility(View.GONE);
+
+                    this.routeService.abandonRoute(
+                        this.route.getRoute()
+                    ).thenRun(
+                        () -> {
+                            this.route = null;
+                        }
+                    );
+                    Toast.makeText(
+                        this,
+                        mapRoute.getStatus() == MapRoute.Status.COMPLETED ?
+                            "Route completed!"
+                            : "Route canceled",
+                        Toast.LENGTH_SHORT
+                    ).show();
+                }
             )
         );
 
@@ -422,5 +450,11 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             )
         );
 
+    }
+
+    @Override
+    public void onRouteSelected(Route route) {
+        Log.e("mapactivity", "route selected");
+        this.setRoute(route);
     }
 }

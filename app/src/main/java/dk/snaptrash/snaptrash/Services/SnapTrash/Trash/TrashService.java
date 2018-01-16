@@ -1,14 +1,8 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.EventListener;
-
 import java.io.File;
-import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -18,6 +12,13 @@ import dk.snaptrash.snaptrash.Models.Trash;
 
 @Singleton
 public interface TrashService {
+
+    public enum TrashState {
+        FREE,
+        RESERVED,
+        PENDING_PICK_UP_CONFIRMED,
+        PICKED_UP
+    }
 
     public interface OnTrashAddedListener {
         public void trashAdded(Trash trash);
@@ -39,14 +40,22 @@ public interface TrashService {
         public void pickUpRejected(Trash trash);
     }
 
+    public interface OnTrashStatusChangedListener {
+        public void trashStatusChanged(Trash trash, TrashState state);
+    }
+
     @NonNull
     CompletableFuture<Set<Trash>> trashes();
 
     @NonNull
-    CompletableFuture<Set<Trash>> availableTrashes();
+    CompletableFuture<Set<Trash>> freeTrashes();
 
     @NonNull
     CompletableFuture<Void> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);
+
+    void setTrashState(Trash trash, TrashState status);
+
+    TrashState getTrashState(Trash trash);
 
     @NonNull
     CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash);
@@ -65,5 +74,9 @@ public interface TrashService {
 
     public void addOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
     public void removeOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
+
+    public void addOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
+    public void removeOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
+
 
 }

@@ -23,6 +23,8 @@
     <string name="StartRecording">Start Recording</string>
     <string name="TrashPickUpVerified">Trash Pickup Verified</string>
     <string name="FailedPickUp">Failed pickup</string>
+    <string name="RouteAlreadyInProgress">Route already in progress</string>
+    <string name="FailedConnectingToServer">Failed connecting to server.</string>
     <string name="connectionFailed">Failed connecting to server.</string>
     <string name="alreadyMemberText">Already a member? Login</string>
     <string name="hint_email">Email</string>

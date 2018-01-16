@@ -4,10 +4,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -22,11 +22,11 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -39,8 +39,6 @@ import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
-import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
-import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import okhttp3.HttpUrl;
@@ -70,7 +68,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         new HashSet<>()
     );
 
-    private Set<Trash> trashes;
+    private Set<OnTrashStatusChangedListener> statusChangedListeners = Collections.synchronizedSet(
+        new HashSet<>()
+    );
+
+    private Map<Trash, TrashState> trashes;
 
     private OkHttpClient client = new OkHttpClient();
 
@@ -133,7 +135,13 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     }
 
-    @Nullable
+    private boolean reservedByCurrentUser(Trash trash, Date now) {
+            return trash.getReservedUntil() != null
+            && trash.getReservedUntil().after(now)
+            && trash.getReservedById().equals(this.authProvider.getUser().getId());
+    }
+
+    @NonNull
     private Optional<Trash> toTrash(DocumentSnapshot documentSnapshot) {
         if(documentSnapshot.getGeoPoint("location") == null) {
             return Optional.empty();
@@ -155,7 +163,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     public CompletableFuture<Set<Trash>> trashes() {
         if (this.trashes != null) {
             return CompletableFuture.completedFuture(
-                new HashSet<>(this.trashes)
+                new HashSet<>(this.trashes.keySet())
             );
         }
         return CompletableFuture.supplyAsync(
@@ -175,7 +183,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                             .collect(Collectors.toSet())
                     );
 
-                    return new HashSet<>(this.trashes);
+                    return new HashSet<>(this.trashes.keySet());
 
                 } catch (IOException|JSONException e) {
                     throw new RuntimeException(e);
@@ -186,12 +194,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @NonNull
     @Override
-    public CompletableFuture<Set<Trash>> availableTrashes() {
+    public CompletableFuture<Set<Trash>> freeTrashes() {
         return this.trashes().thenApply(
-            _trashes -> trashes
-                .stream()
-                .filter(trash -> trash.getStatus() == Trash.Status.AVAILABLE)
-                .collect(Collectors.toSet())
+            _trashes -> _trashes.stream().filter(
+                trash -> this.trashes.get(trash) == TrashState.FREE
+            ).collect(Collectors.toSet())
         );
     }
 
@@ -207,22 +214,38 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                         .build()
                     )
                     .build();
-
+                //todo readd remove from backend
 //                try {
 //                    Response response = client.newCall(request).execute();
 //
 //                    if(response.code() != 204) {
 //                        throw new RuntimeException("PICKUP IS NOT A 204 RESPONSE CODE.");
 //                    }
-                    trash.setStatus(Trash.Status.PENDING_REMOVAL_CONFIRMED);
+                    this.setTrashState(
+                        trash,
+                        TrashState.PENDING_PICK_UP_CONFIRMED
+                    );
                     this.pickedUpListeners.forEach(
                         listener -> listener.pickedUp(trash)
                     );
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
             }
         );
+    }
+
+    @Override
+    public void setTrashState(Trash trash, TrashState state) {
+        TrashState previousStatus = this.trashes.get(trash);
+        if (previousStatus != null && previousStatus != state) {
+            this.trashes.replace(trash, state);
+            this.statusChangedListeners.forEach(
+                listener -> listener.trashStatusChanged(trash, state)
+            );
+        }
+    }
+
+    @Override
+    public TrashState getTrashState(Trash trash) {
+        return this.trashes.get(trash);
     }
 
     @SuppressLint("MissingPermission")
@@ -298,17 +321,32 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         this.rejectedListeners.remove(onPickUpRejectedListener);
     }
 
+    @Override
+    public void addOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener) {
+        this.statusChangedListeners.add(onTrashStatusChangedListener);
+    }
+
+    @Override
+    public void removeOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener) {
+        this.statusChangedListeners.remove(onTrashStatusChangedListener);
+    }
+
     private void updateTrashes(Set<Trash> newTrashes) {
         if (this.trashes == null) {
-            this.trashes = new HashSet<>();
+            this.trashes = Collections.synchronizedMap(new HashMap<>());
         }
 
-        Set<Trash> currentTrashes = new HashSet<>(this.trashes);
+        Set<Trash> currentTrashes =
+            this.trashes.keySet()
+                .stream()
+                .filter(
+                    trash -> this.getTrashState(trash) != TrashState.PICKED_UP
+                )
+                .collect(Collectors.toSet());
 
         CollectionUtils.subtract(currentTrashes, newTrashes).forEach(
             trash -> {
-                trash.setStatus(Trash.Status.PICKED_UP);
-                this.trashes.remove(trash);
+                this.setTrashState(trash, TrashState.PICKED_UP);
                 this.removedListeners.forEach(
                     listener -> listener.trashRemoved(trash)
                 );
@@ -317,18 +355,18 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
         CollectionUtils.subtract(newTrashes, currentTrashes).forEach(
             trash -> {
-                this.trashes.add(trash);
+                this.trashes.put(
+                    trash,
+                    this.reservedByCurrentUser(trash, new Date()) ?
+                        TrashState.RESERVED
+                        : TrashState.FREE
+                );
                 this.addedListeners.forEach(
                     listener -> listener.trashAdded(trash)
                 );
-                if (trash.getStatus() == Trash.Status.PENDING_REMOVAL_CONFIRMED) {
-                    trash.setStatus(Trash.Status.PICKED_UP);
-                    this.verifiedListeners.forEach(
-                        listener -> listener.pickUpVerified(trash)
-                    );
-                }
             }
         );
+
     }
 
     @Override
@@ -343,12 +381,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .filter(
-                    trash ->
-                        (
-                            trash.getReservedUntil() != null
-                            && trash.getReservedUntil().before(now)
-                        )
-                        || Objects.equals(trash.getReservedById(), this.authProvider.getUser().getId())
+                    trash -> trash.getReservedUntil() == null
+                    || trash.getReservedUntil().before(now)
+                    || trash.getReservedById().equals(
+                        this.authProvider.getUser().getId()
+                    )
                 )
                 .collect(Collectors.toSet())
         );
