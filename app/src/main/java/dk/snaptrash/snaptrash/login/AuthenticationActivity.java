@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +30,8 @@ import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 
 public abstract class AuthenticationActivity extends AppCompatActivity {
 
-    private static final int C_SAVE = 0;
+    private static final int CHOOSE_RETRIVED_CREDENTIAL = 0;
+    private static final int CONFIRM_SAVE_CREDENTIAL = 1;
 
     private FirebaseAuth firebaseAuth;
     private GoogleApiClient credentialsApiClient;
@@ -45,18 +47,23 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
         );
     }
 
+    private interface OnSuccefulCredentialsSavedListener {
+        void onCredentialsSaved();
+    }
+
     private Set<OnApiClientConnectedListener> onApiClientConnectedListeners
         = Collections.synchronizedSet(
-            Collections.newSetFromMap(
-                new WeakHashMap<>()
-            )
+            new HashSet<>()
     );
 
     private Set<OnCredentialsChosenListener> onCredentialsChosenListeners
         = Collections.synchronizedSet(
-            Collections.newSetFromMap(
-                new WeakHashMap<>()
-            )
+            new HashSet<>()
+    );
+
+    private Set<OnSuccefulCredentialsSavedListener> onSuccefulCredentialsSavedListeners
+        = Collections.synchronizedSet(
+        new HashSet<>()
     );
 
     @Override
@@ -123,7 +130,7 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
     }
 
     protected CompletableFuture<Void> saveCredentials(String email, String password, long timeout) {
-        return this.getGoogleApiClient(timeout).thenAcceptAsync(
+        return this.getGoogleApiClient().thenAcceptAsync(
             client -> {
                 Auth.CredentialsApi.save(
                     client,
@@ -137,8 +144,28 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
                             } else {
                                 if (status.hasResolution()) {
                                     Log.e("auth", "status has resolution");
+//                                    CompletableFuture<Void> future = new CompletableFuture<>();
+//                                    this.onSuccefulCredentialsSavedListeners.add(
+//                                        () -> future.complete(null)
+//                                    );
+                                        try {
+                                            status.startResolutionForResult(
+                                                this,
+                                                AuthenticationActivity.CONFIRM_SAVE_CREDENTIAL
+                                            );
+                                        } catch (IntentSender.SendIntentException e) {
+                                            Log.e("auth", "failed resolving");
+                                            throw new CompletionException(e);
+                                        }
+//                                    try {
+//                                        future.get();
+//                                    } catch (InterruptedException | ExecutionException e) {
+//                                        Log.e("auth", "failed getting from future");
+//                                        throw new CompletionException(e);
+//                                    }
                                 } else {
                                     Log.e("auth", "Save Failed");
+                                    throw new CompletionException(new Exception());
                                 }
                             }
                         }
@@ -159,7 +186,13 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
             )
         ).thenApplyAsync(
             authResult -> {
+//                try {
+//                    this.saveCredentials(email, password).get();
+//                } catch (InterruptedException | ExecutionException e) {
+//                }
+                Log.e("auth", "begin save credentials");
                 this.saveCredentials(email, password);
+                Log.e("auth", "after save credentials begun");
                 return FirebaseUserService.toUser(authResult);
             }
         );
@@ -190,7 +223,7 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
                         try {
                             result.getStatus().startResolutionForResult(
                                 this,
-                                AuthenticationActivity.C_SAVE
+                                AuthenticationActivity.CHOOSE_RETRIVED_CREDENTIAL
                             );
                         } catch (IntentSender.SendIntentException e) {
                             throw new CompletionException(e);
@@ -236,7 +269,8 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == AuthenticationActivity.C_SAVE) {
+        Log.e("auth", "requestcode: " + requestCode + " resultcode: " + resultCode);
+        if (requestCode == AuthenticationActivity.CHOOSE_RETRIVED_CREDENTIAL) {
             if (resultCode == RESULT_OK) {
                 Credential credential = data.getParcelableExtra(Credential.EXTRA_KEY);
                 this.onCredentialsChosenListeners.forEach(
@@ -245,6 +279,13 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
             } else {
                 this.onCredentialsChosenListeners.forEach(
                     listener -> listener.onCredentialsChosen(null, resultCode)
+                );
+            }
+        } else if (requestCode == AuthenticationActivity.CONFIRM_SAVE_CREDENTIAL) {
+            if (resultCode == RESULT_OK) {
+                Log.e("auth", "size: " + this.onSuccefulCredentialsSavedListeners.size());
+                this.onSuccefulCredentialsSavedListeners.forEach(
+                    OnSuccefulCredentialsSavedListener::onCredentialsSaved
                 );
             }
         }
