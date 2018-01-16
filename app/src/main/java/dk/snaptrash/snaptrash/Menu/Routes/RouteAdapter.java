@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -73,6 +74,10 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_route, parent, false);
         }
+        TextView additional = convertView.findViewById(R.id.additional);
+        TextView title = convertView.findViewById(R.id.routeTitle);
+
+        additional.setText(route.getDirection().getLength());
 
         return convertView;
     }

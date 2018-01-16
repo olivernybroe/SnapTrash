@@ -39,6 +39,8 @@ import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import okhttp3.HttpUrl;
@@ -88,11 +90,13 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             .collection("trashes");
     }
 
-    private HttpUrl.Builder urlBuilder() {
+    private HttpUrl.Builder urlBuilder(String userId) {
         return new HttpUrl.Builder()
             .host("us-central1-snaptrash-1507812289113.cloudfunctions.net")
             .scheme("https")
-            .addPathSegments("snaptrash/trashes");
+            .addPathSegments("snaptrash/users")
+            .addPathSegment(userId)
+            .addPathSegment("trashes");
     }
 
     public Optional<Trash> toTrash(@Nullable JSONObject jsonObject) {
@@ -157,7 +161,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return CompletableFuture.supplyAsync(
             () -> {
                 Request request = new Request.Builder()
-                    .url(urlBuilder().build())
+                    .url(urlBuilder(authProvider.getUser().getId()).build())
                     .build();
                 try {
                     Response response = client.newCall(request).execute();
@@ -197,7 +201,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return CompletableFuture.runAsync(
             () -> {
                 Request request = new Request.Builder()
-                    .url(urlBuilder()
+                    .url(urlBuilder(authProvider.getUser().getId())
                         .addPathSegment(trash.getId())
                         .addPathSegment("pick-up")
                         .build()
