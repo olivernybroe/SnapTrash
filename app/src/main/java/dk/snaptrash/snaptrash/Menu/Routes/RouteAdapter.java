@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.LatLng;
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
+import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 
 
 public class RouteAdapter extends ArrayAdapter<Route> {
@@ -36,7 +37,7 @@ public class RouteAdapter extends ArrayAdapter<Route> {
                 });
                 return;
             }
-            routeService.getRoutes(new LatLng(location.getLatitude(), location.getLongitude())).whenComplete((routes, throwable) -> {
+            routeService.getRoutesWithDirections(Geo.toCoordinate(location)).whenComplete((routes, throwable) -> {
                 if (throwable == null) {
                     dialog.getActivity().runOnUiThread(() -> {
                         this.addAll(routes);
@@ -46,8 +47,8 @@ public class RouteAdapter extends ArrayAdapter<Route> {
                     });
                 }
                 else {
-                    Log.e("RouteAdapter", "failed getting the routes.", throwable);
                     dialog.getActivity().runOnUiThread(() -> {
+                        Log.e("RouteAdapter", "failed getting the routes.", throwable);
                         Toast.makeText(dialog.getActivity(), "Failed connecting to server.", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     });

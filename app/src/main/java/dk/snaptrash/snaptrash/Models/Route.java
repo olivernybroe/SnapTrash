@@ -9,6 +9,7 @@ import org.apache.commons.collections4.set.ListOrderedSet;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.SplittableRandom;
 import java.util.stream.Collectors;
 
@@ -49,8 +50,24 @@ public class Route extends Model<Route> {
         return Id.equals(route.Id);
     }
 
+    public Route setDirection(@Nullable Optional<Direction> direction) {
+        assert direction != null;
+        direction.ifPresent(direction1 -> this.direction = direction1);
+        return this;
+    }
+
+    public Route setDirection(@Nullable Direction direction) {
+        this.direction = direction;
+        return this;
+    }
+
     @Override
     public int hashCode() {
         return Id.hashCode();
+    }
+
+    @Nullable
+    public Direction getDirection() {
+        return direction;
     }
 }

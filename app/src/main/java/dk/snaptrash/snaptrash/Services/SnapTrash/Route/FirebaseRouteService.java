@@ -12,13 +12,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,6 +32,8 @@ import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.Models.Trash;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.FirebaseTrashService;
+import dk.snaptrash.snaptrash.Utils.Geo.Coordinate;
+import dk.snaptrash.snaptrash.Utils.Geo.Direction;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -55,7 +61,7 @@ public class FirebaseRouteService implements RouteService {
 
     @NonNull
     @Override
-    public CompletableFuture<Collection<Route>> getRoutes(LatLng position) {
+    public CompletableFuture<Collection<Route>> getRoutes(Coordinate position) {
         return CompletableFuture.supplyAsync(() -> {
 
             Request request = new Request.Builder()
@@ -80,8 +86,29 @@ public class FirebaseRouteService implements RouteService {
 
     @NonNull
     @Override
-    public CompletableFuture<Collection<Route>> getRoutesWithDirections(LatLng position) {
-        return null;
+    public CompletableFuture<Collection<Route>> getRoutesWithDirections(Coordinate position) {
+        return getRoutes(position).thenApplyAsync(routes -> {
+            Collection<Route> completableRoutes = new ArrayList<>();
+
+            try {
+                CompletableFuture.allOf(
+                    routes.stream().map(route -> CompletableFuture.supplyAsync(() -> {
+                        try {
+                            route.setDirection(Direction.directionFromTrashes(position, route.getTrashes()).get());
+                            completableRoutes.add(route);
+                            return route;
+                        } catch (InterruptedException|ExecutionException e) {
+                            completableRoutes.add(route);
+                            return route;
+                        }
+                    })).toArray((IntFunction<CompletableFuture<Route>[]>) CompletableFuture[]::new)
+                ).get();
+            } catch (InterruptedException|ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+            return completableRoutes;
+        });
     }
 
     private Optional<Route> toRoute(@Nullable JSONObject jsonRoute) {
