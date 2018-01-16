@@ -1,8 +1,6 @@
 package dk.snaptrash.snaptrash.Menu.Routes;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -14,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
 
 import dk.snaptrash.snaptrash.Models.Route;
 import dk.snaptrash.snaptrash.R;
@@ -77,7 +74,14 @@ public class RouteAdapter extends ArrayAdapter<Route> {
         TextView additional = convertView.findViewById(R.id.additional);
         TextView title = convertView.findViewById(R.id.routeTitle);
 
-        additional.setText(route.getDirection().getLength());
+        int duration = route.getDirection().getDuration()/60;
+        double length = route.getDirection().getDistance()/1000;
+        Log.e("ROUTE", String.valueOf(length));
+
+        additional.setText(String.format("Length: %s km  Approx: %s",
+            Double.toString(length),
+            duration >= 100 ? duration/60+" hours" : duration+" minutes"
+        ));
 
         return convertView;
     }

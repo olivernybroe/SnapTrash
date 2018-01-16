@@ -29,8 +29,18 @@ public class Direction {
         this.route = route;
     }
 
-    public int getLength() {
-        return 0;
+    /**
+     * @return distance in meters
+     */
+    public int getDistance() {
+        return route.getLegList().stream().mapToInt(leg -> Integer.valueOf(leg.getDistance().getValue())).sum();
+    }
+
+    /**
+     * @return duration in seconds
+     */
+    public int getDuration() {
+        return route.getLegList().stream().mapToInt(leg -> Integer.valueOf(leg.getDuration().getValue())).sum();
     }
 
     public Collection<PolylineOptions> toPolylineOptions(Context context) {
