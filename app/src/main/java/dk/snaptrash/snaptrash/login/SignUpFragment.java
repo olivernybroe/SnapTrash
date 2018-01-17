@@ -98,8 +98,10 @@ public class SignUpFragment extends Fragment {
             profilePicUri
         ).whenComplete((user, throwable) -> {
             if(throwable == null) {
+                Log.e("auth", "succeful sign up, loggin in");
                 this.loginActivity.login(email.getText().toString(), password.getText().toString())
                 .whenCompleteAsync((_user, _throwable) -> {
+                    Log.e("auth", "signup", _throwable);
                     loginActivity.runOnUiThread(
                         () -> {
                             if (_throwable == null) {
