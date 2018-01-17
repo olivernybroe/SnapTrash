@@ -111,7 +111,7 @@
         android:scaleType="fitCenter"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:src="@drawable/menu_routes_logo"
+        android:src="@drawable/close_route_icon"
         />
 
     <me.zhanghai.android.materialprogressbar.MaterialProgressBar
