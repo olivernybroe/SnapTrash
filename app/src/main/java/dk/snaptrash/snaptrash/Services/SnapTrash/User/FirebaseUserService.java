@@ -12,13 +12,17 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.maps.android.MarkerManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +39,10 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class FirebaseUserService implements UserService {
+
+    private Set<OnUserLoggedInListener> onUserLoggedInListeners = Collections.synchronizedSet(
+        new HashSet<>()
+    );
 
     private OkHttpClient client = new OkHttpClient();
 
@@ -80,6 +88,22 @@ public class FirebaseUserService implements UserService {
                 return authResult;
             })
             .thenApply(FirebaseUserService::toUser);
+    }
+
+    @Override
+    public void addOnUserLoggedInListener(OnUserLoggedInListener onUserLoggedInListener) {
+        this.onUserLoggedInListeners.add(onUserLoggedInListener);
+    }
+
+    @Override
+    public void removeOnUserLoggedInListener(OnUserLoggedInListener onUserLoggedInListener) {
+        this.onUserLoggedInListeners.remove(onUserLoggedInListener);
+    }
+
+    public void userLoggedIn(User user) {
+        this.onUserLoggedInListeners.forEach(
+            listener -> listener.userLoggedIn(user)
+        );
     }
 
     private static Optional<User> toUser(JSONObject object) {

@@ -189,8 +189,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         this.trashMarkerMap = new TrashMapMap(
             this,
             trashService,
-            this.googleMap,
-            getDrawable(R.drawable.trash_icon)
+            this.googleMap
         );
 
         this.routeService.getCurrentRoute().thenAccept(

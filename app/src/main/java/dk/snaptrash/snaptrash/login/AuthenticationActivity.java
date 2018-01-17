@@ -24,8 +24,13 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import javax.inject.Inject;
+
 import dk.snaptrash.snaptrash.Models.User;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.FirebaseTrashService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.FirebaseUserService;
+import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 
 public abstract class AuthenticationActivity extends AppCompatActivity {
@@ -35,6 +40,8 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
 
     private FirebaseAuth firebaseAuth;
     private GoogleApiClient credentialsApiClient;
+    @Inject UserService userService;
+    @Inject TrashService trashService;
 
     private interface OnApiClientConnectedListener {
         void onConnected(@Nullable Bundle bundle);
@@ -186,14 +193,15 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
             )
         ).thenApplyAsync(
             authResult -> {
-//                try {
-//                    this.saveCredentials(email, password).get();
-//                } catch (InterruptedException | ExecutionException e) {
-//                }
-                Log.e("auth", "begin save credentials");
                 this.saveCredentials(email, password);
-                Log.e("auth", "after save credentials begun");
-                return FirebaseUserService.toUser(authResult);
+                User user = FirebaseUserService.toUser(authResult);
+                ((FirebaseUserService) this.userService).userLoggedIn(user);
+//                try {
+//                    ((FirebaseTrashService) this.trashService).reset().get();
+//                } catch (InterruptedException | ExecutionException e) {
+//                    Log.e("auth", "failed trash reset");
+//                }
+                return user;
             }
         );
     }
@@ -245,16 +253,7 @@ public abstract class AuthenticationActivity extends AppCompatActivity {
                 } else {
                     credential = result.getCredential();
                 }
-                Log.e("auth", "successful retrieval");
-                Log.e("auth", String.valueOf(credential == null));
-                Log.e(
-                    "auth",
-                    String.format(
-                        "id: %s, password: %s",
-                        credential.getId(),
-                        credential.getPassword()
-                    )
-                );
+
                 try {
                     return this.login(
                         credential.getId(),

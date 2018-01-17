@@ -12,6 +12,7 @@ import dk.snaptrash.snaptrash.Menu.Routes.RouteDialog;
 import dk.snaptrash.snaptrash.PickUp.PickUpActivity;
 import dk.snaptrash.snaptrash.PickUp.PickUpRecordingFragment;
 import dk.snaptrash.snaptrash.SnapTrashApplication;
+import dk.snaptrash.snaptrash.login.AuthenticationActivity;
 import dk.snaptrash.snaptrash.login.LogInFragment;
 import dk.snaptrash.snaptrash.login.LoginActivity;
 import dk.snaptrash.snaptrash.Map.MapActivity;
@@ -53,5 +54,8 @@ public abstract class ActivityBuilder {
 
     @ContributesAndroidInjector
     abstract SignUpFragment bindSignUpFragment();
+
+    @ContributesAndroidInjector
+    abstract AuthenticationActivity bindAuthenticationActivity();
 
 }

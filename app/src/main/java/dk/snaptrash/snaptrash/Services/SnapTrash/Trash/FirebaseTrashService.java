@@ -22,10 +22,14 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +42,9 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import dk.snaptrash.snaptrash.Models.Trash;
+import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
+import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 import okhttp3.HttpUrl;
@@ -80,11 +86,17 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     AuthProvider authProvider;
 
+    UserService userService;
+
     @Inject
-    public FirebaseTrashService(Context context, AuthProvider authProvider) {
+    public FirebaseTrashService(Context context, AuthProvider authProvider, UserService userService) {
         this.context = context;
         this.authProvider = authProvider;
+        this.userService = userService;
         this.trashCollection().addSnapshotListener(this);
+        this.userService.addOnUserLoggedInListener(
+            user -> this.reset()
+        );
     }
 
     private Query trashCollection() {
@@ -103,21 +115,33 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     public Optional<Trash> toTrash(@Nullable JSONObject jsonObject) {
         if(jsonObject == null) {
+            Log.e("trashservice", "failed to trash: empty");
             return Optional.empty();
         }
 
         if(jsonObject.optString("type") == null || !jsonObject.optString("type").equals("Trash")) {
+            Log.e("trashservice", "failed to trash: no type or not trash");
             return Optional.empty();
         }
 
         JSONObject data = jsonObject.optJSONObject("data");
         if(data == null) {
+            Log.e("trashservice", "failed to trash: no data");
             return Optional.empty();
         }
 
         JSONObject location = data.optJSONObject("location");
         if(location == null) {
+            Log.e("trashservice", "failed to trash: no location");
             return Optional.empty();
+        }
+
+        Date date = null;
+        String dateString = data.optString("reserved_until", "");
+        try {
+            date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).parse(dateString);
+        } catch (ParseException e) {
+            Log.e("trashservice", "failed parse date", e);
         }
 
         try {
@@ -127,18 +151,25 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                 data.optString("pictureUrl", null),
                 data.optString("description"),
                 data.optString("created_by", null),
-                data.optString("reserved_by", null)
+                data.optString("reserved_by", null),
+                date
+
             ));
         } catch (JSONException e) {
+            Log.e("trashservice", "failed to trash", e);
             return Optional.empty();
         }
 
     }
 
     private boolean reservedByCurrentUser(Trash trash, Date now) {
-            return trash.getReservedUntil() != null
+        boolean reserved = trash.getReservedUntil() != null
             && trash.getReservedUntil().after(now)
             && trash.getReservedById().equals(this.authProvider.getUser().getId());
+//        Log.e("trashservice", "reserved by user?: " + trash.getId() + " it is: " + reserved);
+//        Log.e("trashservice", now +", " + trash.getReservedUntil() + ", " + trash.getReservedById() + ", " + this.authProvider.getUser().getId());
+//        Log.e("trashservice", "time: " + trash.getReservedUntil().after(now) + " id: " + trash.getReservedById().equals(this.authProvider.getUser().getId()));
+        return reserved;
     }
 
     @NonNull
@@ -147,7 +178,8 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             return Optional.empty();
         }
 
-        return Optional.of(new Trash(
+        return Optional.of(
+            new Trash(
             documentSnapshot.getId(),
             Geo.toLatLng(documentSnapshot.getGeoPoint("location")),
             documentSnapshot.getString("pictureUrl"),
@@ -161,19 +193,24 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     @NonNull
     @Override
     public CompletableFuture<Set<Trash>> trashes() {
+        Log.e("trashservice", "get trashes: " + this.trashes);
         if (this.trashes != null) {
             return CompletableFuture.completedFuture(
                 new HashSet<>(this.trashes.keySet())
             );
         }
+        Log.e("trashservice", "trash er null");
         return CompletableFuture.supplyAsync(
             () -> {
+                Log.e("trashservice", "fetching trash...");
                 Request request = new Request.Builder()
                     .url(urlBuilder(authProvider.getUser().getId()).build())
                     .build();
                 try {
                     Response response = client.newCall(request).execute();
                     JSONArray jsonArray = new JSONArray(response.body().string());
+
+                    Log.e("trashservice", "fetched!: " + jsonArray.length());
 
                     this.updateTrashes(
                         IntStream.range(0, jsonArray.length())
@@ -183,10 +220,14 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                             .collect(Collectors.toSet())
                     );
 
+                    Log.e("trashservice", "update done");
+
                     return new HashSet<>(this.trashes.keySet());
 
-                } catch (IOException|JSONException e) {
-                    throw new RuntimeException(e);
+                } catch (Throwable e) {
+//                    IOException|JSONException
+                    Log.e("trashservice", "fetch failed", e);
+                    throw new CompletionException(e);
                 }
             }
         );
@@ -194,10 +235,12 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @NonNull
     @Override
-    public CompletableFuture<Set<Trash>> freeTrashes() {
+    public CompletableFuture<Set<Trash>> availableTrashes() {
         return this.trashes().thenApply(
             _trashes -> _trashes.stream().filter(
-                trash -> this.trashes.get(trash) == TrashState.FREE
+                trash ->
+                    this.trashes.get(trash) == TrashState.FREE
+                    || this.trashes.get(trash) == TrashState.RESERVED
             ).collect(Collectors.toSet())
         );
     }
@@ -214,7 +257,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                         .build()
                     )
                     .build();
-                //todo readd remove from backend
+                //todo re-add remove from backend
 //                try {
 //                    Response response = client.newCall(request).execute();
 //
@@ -332,6 +375,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     }
 
     private void updateTrashes(Set<Trash> newTrashes) {
+        Log.e("trashservice", "update trashes: " + this.trashes + " new trashes: " + newTrashes);
         if (this.trashes == null) {
             this.trashes = Collections.synchronizedMap(new HashMap<>());
         }
@@ -344,8 +388,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                 )
                 .collect(Collectors.toSet());
 
+        Log.e("trashservice", "current trashes: " + currentTrashes);
+
         CollectionUtils.subtract(currentTrashes, newTrashes).forEach(
             trash -> {
+                Log.e("trashservice", "remove trash: " + trash);
                 this.setTrashState(trash, TrashState.PICKED_UP);
                 this.removedListeners.forEach(
                     listener -> listener.trashRemoved(trash)
@@ -353,8 +400,17 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             }
         );
 
+        Log.e("trashservice", "new trashes: " + CollectionUtils.subtract(newTrashes, currentTrashes));
+
+        CollectionUtils.subtract(newTrashes, currentTrashes).forEach(
+            trash -> Log.e("trashservicec", "a trash")
+        );
+
+        Log.e("trashservice", "new trash length: " + CollectionUtils.subtract(newTrashes, currentTrashes).size());
+
         CollectionUtils.subtract(newTrashes, currentTrashes).forEach(
             trash -> {
+                Log.e("trashservice", "add trash: " + trash);
                 this.trashes.put(
                     trash,
                     this.reservedByCurrentUser(trash, new Date()) ?
@@ -371,7 +427,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
 
     @Override
     public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException e) {
-        if(documentSnapshots == null) {
+        if(documentSnapshots == null || this.authProvider.getUser() == null) {
             return;
         }
         Date now = new Date();
@@ -389,6 +445,11 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                 )
                 .collect(Collectors.toSet())
         );
+    }
+
+    public CompletableFuture<Set<Trash>> reset() {
+        this.trashes = null;
+        return this.trashes();
     }
 
 }

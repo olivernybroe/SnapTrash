@@ -48,7 +48,7 @@ public interface TrashService {
     CompletableFuture<Set<Trash>> trashes();
 
     @NonNull
-    CompletableFuture<Set<Trash>> freeTrashes();
+    CompletableFuture<Set<Trash>> availableTrashes();
 
     @NonNull
     CompletableFuture<Void> pickUp(@NonNull Trash trash, @NonNull File pickUpVideo);

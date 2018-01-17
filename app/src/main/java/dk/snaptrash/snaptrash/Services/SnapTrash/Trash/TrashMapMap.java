@@ -30,7 +30,7 @@ public class TrashMapMap {
     private BitmapDescriptor unselectedBitmap;
     private BitmapDescriptor selectedBitmap;
 
-    public TrashMapMap(Activity activity, TrashService trashService, GoogleMap map, Drawable drawable) {
+    public TrashMapMap(Activity activity, TrashService trashService, GoogleMap map) {
         super();
         this.activity = activity;
         this.trashService = trashService;
@@ -51,13 +51,14 @@ public class TrashMapMap {
                 )
             )
         );
+
         this.unselectedMarkerOptions = new MarkerOptions()
             .icon(
                 this.unselectedBitmap
             );
         this.selectedMarkerOptions = new MarkerOptions()
             .icon(
-                this.unselectedBitmap
+                this.selectedBitmap
             );
 
         trashService.addOnTrashAddedListener(this::put);
@@ -81,7 +82,7 @@ public class TrashMapMap {
             }
         );
 
-        trashService.freeTrashes().thenAcceptAsync(
+        trashService.availableTrashes().thenAcceptAsync(
             trashes -> trashes.forEach(this::put)
         );
     }
@@ -91,7 +92,7 @@ public class TrashMapMap {
             () -> this.biMap.computeIfAbsent(
                 trash,
                 _trash -> {
-                    Log.e("trashmapmap", "putting trash: " + trash);
+                    Log.e("trashmapmap", "putting trash: " + trash + " state: " + this.trashService.getTrashState(trash));
                     return this.googleMap.addMarker(
                         this.trashService.getTrashState(trash) == TrashService.TrashState.RESERVED
                             ? this.selectedMarkerOptions.position(

@@ -33,8 +33,8 @@ public class FirebaseSnapTrashModule implements SnapTrashModule {
 
     @Singleton
     @Provides
-    public TrashService provideTrashService(Context context, AuthProvider authProvider) {
-        return new FirebaseTrashService(context, authProvider);
+    public TrashService provideTrashService(Context context, AuthProvider authProvider, UserService userService) {
+        return new FirebaseTrashService(context, authProvider, userService);
     }
 
     @Singleton
