@@ -1,8 +1,11 @@
 package dk.snaptrash.snaptrash.PickUp;
 
+import android.Manifest;
 import android.app.Fragment;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +24,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import dk.snaptrash.snaptrash.R;
+
+import static com.otaliastudios.cameraview.CameraView.PERMISSION_REQUEST_CODE;
 
 public class PickUpRecordingFragment extends Fragment implements View.OnClickListener {
 
@@ -66,9 +71,15 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
         View view = inflater.inflate(R.layout.fragment_recording, container, false);
 
         this.cameraView = view.findViewById(R.id.CameraView);
+        this.startRecordingButton = view.findViewById(R.id.RecordButton);
+        this.startRecordingButton.setOnClickListener(this);
 
-        this.cameraView.setAudio(Audio.OFF);
-        this.cameraView.setSessionType(SessionType.VIDEO);
+        if(this.getActivity().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            this.requestPermissions(new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
+        }
+        else {
+            startCamera();
+        }
 
         this.chronometer = view.findViewById(R.id.RecordingChronometer);
 
@@ -81,10 +92,13 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
             )
         );
 
-        this.startRecordingButton = view.findViewById(R.id.RecordButton);
+        return view;
+    }
 
-        this.startRecordingButton.setOnClickListener(this);
-
+    private void startCamera() {
+        this.cameraView.setAudio(Audio.OFF);
+        this.cameraView.setSessionType(SessionType.VIDEO);
+        this.startRecordingButton.setEnabled(true);
         this.cameraView.addCameraListener(
             new CameraListener() {
                 @Override
@@ -96,14 +110,21 @@ public class PickUpRecordingFragment extends Fragment implements View.OnClickLis
                 }
             }
         );
-
-        return view;
+        this.cameraView.start();
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        this.cameraView.start();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == PERMISSION_REQUEST_CODE) {
+            Log.e("PICKUP", "permission maybe?");
+            if (grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.e("PICKUP", "permission granted");
+                startCamera();
+            }
+        }
     }
 
     @Override

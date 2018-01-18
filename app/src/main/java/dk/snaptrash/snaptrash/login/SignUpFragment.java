@@ -18,7 +18,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.UploadTask;
+
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 
@@ -26,6 +31,7 @@ import dagger.android.AndroidInjection;
 import dk.snaptrash.snaptrash.Map.MapActivity;
 import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.User.UserService;
+import dk.snaptrash.snaptrash.Utils.TaskWrapper;
 
 public class SignUpFragment extends Fragment {
 
@@ -122,6 +128,7 @@ public class SignUpFragment extends Fragment {
             else {
                 Log.e("SignUp", "failed signing up", throwable);
                 loginActivity.runOnUiThread(() -> {
+                    signUpButton.setEnabled(true);
                     Toast.makeText(loginActivity, "Failed signing up.", Toast.LENGTH_SHORT).show();
                 });
             }

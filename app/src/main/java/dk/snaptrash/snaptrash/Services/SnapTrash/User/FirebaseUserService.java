@@ -12,6 +12,8 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.UploadTask;
 import com.google.maps.android.MarkerManager;
 
 import org.json.JSONArray;
@@ -39,6 +41,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class FirebaseUserService implements UserService {
+    private FirebaseStorage storage = FirebaseStorage.getInstance();
 
     private Set<OnUserLoggedInListener> onUserLoggedInListeners = Collections.synchronizedSet(
         new HashSet<>()
@@ -75,9 +78,15 @@ public class FirebaseUserService implements UserService {
     public CompletableFuture<User> create(String name, String email, String password, Uri profilePic) {
         return TaskWrapper.wrapAsync(FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password))
             .thenApplyAsync(authResult -> {
+                UploadTask.TaskSnapshot taskSnapshot;
+                try {
+                     taskSnapshot = TaskWrapper.wrapAsync(storage.getReference().child(authResult.getUser().getUid()).putFile(profilePic)).get();
+                } catch (InterruptedException|ExecutionException e) {
+                    throw new CompletionException(e);
+                }
                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                     .setDisplayName(name)
-                    .setPhotoUri(profilePic)
+                    .setPhotoUri(taskSnapshot.getDownloadUrl())
                     .build();
 
                 try {
