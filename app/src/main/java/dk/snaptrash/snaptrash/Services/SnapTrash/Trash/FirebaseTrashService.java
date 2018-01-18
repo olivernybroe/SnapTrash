@@ -301,6 +301,7 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     }
 
     @SuppressLint("MissingPermission")
+    @NonNull
     @Override
     public CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash) {
         return TaskWrapper.wrapAsync(

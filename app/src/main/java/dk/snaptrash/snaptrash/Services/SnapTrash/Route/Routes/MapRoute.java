@@ -124,7 +124,7 @@ public class MapRoute {
             future.completeExceptionally(new Exception());
             return future;
         }
-        Log.e("maproute", "updating for: " + this.route.getTrashes().stream().map(trash -> this.trashService.getTrashState(trash)).collect(Collectors.toSet()));
+
         LinkedHashSet<Trash> trashes = new LinkedHashSet<>(
             this.route.getTrashes()
                 .stream()
@@ -138,7 +138,7 @@ public class MapRoute {
                 )
                 .collect(Collectors.toList())
         );
-        Log.e("maproute", "updating for: " + trashes);
+
         return Direction.directionFromTrashes(
             origin,
             trashes
@@ -163,7 +163,10 @@ public class MapRoute {
     private boolean checkCompleted() {
         if (
             this.route.getTrashes().stream().allMatch(
-                trash -> this.trashService.getTrashState(trash) == TrashService.TrashState.PICKED_UP
+                trash ->
+                    this.trashService.getTrashState(trash) == TrashService.TrashState.PICKED_UP
+                    || this.trashService.getTrashState(trash) == TrashService.TrashState.PENDING_PICK_UP_CONFIRMED
+                    //Should only complete on all picked up, but not currently supported in backend
             )
         ) {
             this.complete();

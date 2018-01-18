@@ -1,8 +1,6 @@
 package dk.snaptrash.snaptrash.Services.SnapTrash.Trash;
 
 import android.app.Activity;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -17,7 +15,7 @@ import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.Utils.Graphic;
 
-public class TrashMapMap {
+public class TrashMarkerMap {
 
     private BiMap<Trash, Marker> biMap = HashBiMap.create();
 
@@ -30,8 +28,7 @@ public class TrashMapMap {
     private BitmapDescriptor unselectedBitmap;
     private BitmapDescriptor selectedBitmap;
 
-    public TrashMapMap(Activity activity, TrashService trashService, GoogleMap map) {
-        super();
+    public TrashMarkerMap(Activity activity, TrashService trashService, GoogleMap map) {
         this.activity = activity;
         this.trashService = trashService;
         this.googleMap = map;
@@ -68,7 +65,6 @@ public class TrashMapMap {
         trashService.addOnTrashStatusChangedListener(
             (trash, state) -> {
                 if (this.biMap.containsKey(trash)) {
-                    Log.e("trashmapmap", "status updated on: " + trash + " to: " + state);
                     this.activity.runOnUiThread(
                         () -> {
                             if (state == TrashService.TrashState.RESERVED) {
@@ -91,18 +87,15 @@ public class TrashMapMap {
         this.activity.runOnUiThread(
             () -> this.biMap.computeIfAbsent(
                 trash,
-                _trash -> {
-                    Log.e("trashmapmap", "putting trash: " + trash + " state: " + this.trashService.getTrashState(trash));
-                    return this.googleMap.addMarker(
-                        this.trashService.getTrashState(trash) == TrashService.TrashState.RESERVED
-                            ? this.selectedMarkerOptions.position(
-                            Geo.toLatLng(_trash.getLocation())
-                        )
-                            : this.unselectedMarkerOptions.position(
-                            Geo.toLatLng(_trash.getLocation())
-                        )
-                    );
-                }
+                _trash -> this.googleMap.addMarker(
+                    this.trashService.getTrashState(trash) == TrashService.TrashState.RESERVED
+                        ? this.selectedMarkerOptions.position(
+                        Geo.toLatLng(_trash.getLocation())
+                    )
+                        : this.unselectedMarkerOptions.position(
+                        Geo.toLatLng(_trash.getLocation())
+                    )
+                )
             )
         );
     }

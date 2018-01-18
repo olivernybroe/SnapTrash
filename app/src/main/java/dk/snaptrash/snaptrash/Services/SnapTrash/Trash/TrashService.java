@@ -13,35 +13,35 @@ import dk.snaptrash.snaptrash.Models.Trash;
 @Singleton
 public interface TrashService {
 
-    public enum TrashState {
+    enum TrashState {
         FREE,
         RESERVED,
         PENDING_PICK_UP_CONFIRMED,
         PICKED_UP
     }
 
-    public interface OnTrashAddedListener {
-        public void trashAdded(Trash trash);
+    interface OnTrashAddedListener {
+        void trashAdded(Trash trash);
     }
 
-    public interface OnTrashRemovedListener {
-        public void trashRemoved(Trash trash);
+    interface OnTrashRemovedListener {
+        void trashRemoved(Trash trash);
     }
 
-    public interface OnTrashPickedUpListener {
-        public void pickedUp(Trash trash);
+    interface OnTrashPickedUpListener {
+        void pickedUp(Trash trash);
     }
 
-    public interface OnPickUpVerifiedListener {
-        public void pickUpVerified(Trash trash);
+    interface OnPickUpVerifiedListener {
+        void pickUpVerified(Trash trash);
     }
 
-    public interface OnPickUpRejectedListener {
-        public void pickUpRejected(Trash trash);
+    interface OnPickUpRejectedListener {
+        void pickUpRejected(Trash trash);
     }
 
-    public interface OnTrashStatusChangedListener {
-        public void trashStatusChanged(Trash trash, TrashState state);
+    interface OnTrashStatusChangedListener {
+        void trashStatusChanged(Trash trash, TrashState state);
     }
 
     @NonNull
@@ -57,26 +57,24 @@ public interface TrashService {
 
     TrashState getTrashState(Trash trash);
 
-    @NonNull
-    CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash);
+    @NonNull CompletableFuture<Boolean> trashCanBePickedUp(@NonNull Trash trash);
 
-    public void addOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
-    public void removeOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
+    void addOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
+    void removeOnTrashAddedListener(OnTrashAddedListener onTrashAddedListener);
 
-    public void addOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
-    public void removedOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
+    void addOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
+    void removedOnTrashRemovedListener(OnTrashRemovedListener onTrashRemovedListener);
 
-    public void addOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
-    public void removedOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
+    void addOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
+    void removedOnTrashPickedUpListener(OnTrashPickedUpListener onTrashPickedUpListener);
 
-    public void addOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
-    public void removeOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
+    void addOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
+    void removeOnPickUpVerifiedListener(OnPickUpVerifiedListener onPickUpVerifiedListener);
 
-    public void addOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
-    public void removeOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
+    void addOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
+    void removeOnPickUpRejectedListener(OnPickUpRejectedListener onPickUpRejectedListener);
 
-    public void addOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
-    public void removeOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
-
+    void addOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
+    void removeOnTrashStatusChangedListener(OnTrashStatusChangedListener onTrashStatusChangedListener);
 
 }

@@ -56,7 +56,7 @@ import dk.snaptrash.snaptrash.R;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Auth.AuthProvider;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.RouteService;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Route.Routes.MapRoute;
-import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMapMap;
+import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashMarkerMap;
 import dk.snaptrash.snaptrash.Services.SnapTrash.Trash.TrashService;
 import dk.snaptrash.snaptrash.Utils.Geo.Geo;
 import dk.snaptrash.snaptrash.login.LoginActivity;
@@ -79,7 +79,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     @Inject AuthProvider auth;
     @Inject TrashService trashService;
     @Inject RouteService routeService;
-    @Getter private TrashMapMap trashMarkerMap;
+    @Getter private TrashMarkerMap trashMarkerMap;
     private Location anchhor;
     private ImageButton hasRouteButton;
 
@@ -186,7 +186,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         this.googleMap = googleMap;
 
-        this.trashMarkerMap = new TrashMapMap(
+        this.trashMarkerMap = new TrashMarkerMap(
             this,
             trashService,
             this.googleMap
