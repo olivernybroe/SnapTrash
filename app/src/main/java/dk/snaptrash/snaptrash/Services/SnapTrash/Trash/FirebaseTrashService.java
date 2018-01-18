@@ -113,6 +113,15 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
             .addPathSegment("trashes");
     }
 
+    private HttpUrl.Builder pickUpBuilder(String trashId) {
+        return new HttpUrl.Builder()
+            .host("us-central1-snaptrash-1507812289113.cloudfunctions.net")
+            .scheme("https")
+            .addPathSegments("snaptrash/trashes")
+            .addPathSegment(trashId)
+            .addPathSegment("pick-up");
+    }
+
     public Optional<Trash> toTrash(@Nullable JSONObject jsonObject) {
         if(jsonObject == null) {
             Log.e("trashservice", "failed to trash: empty");
@@ -163,13 +172,9 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
     }
 
     private boolean reservedByCurrentUser(Trash trash, Date now) {
-        boolean reserved = trash.getReservedUntil() != null
+        return trash.getReservedUntil() != null
             && trash.getReservedUntil().after(now)
             && trash.getReservedById().equals(this.authProvider.getUser().getId());
-//        Log.e("trashservice", "reserved by user?: " + trash.getId() + " it is: " + reserved);
-//        Log.e("trashservice", now +", " + trash.getReservedUntil() + ", " + trash.getReservedById() + ", " + this.authProvider.getUser().getId());
-//        Log.e("trashservice", "time: " + trash.getReservedUntil().after(now) + " id: " + trash.getReservedById().equals(this.authProvider.getUser().getId()));
-        return reserved;
     }
 
     @NonNull
@@ -251,19 +256,20 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
         return CompletableFuture.runAsync(
             () -> {
                 Request request = new Request.Builder()
-                    .url(urlBuilder(authProvider.getUser().getId())
-                        .addPathSegment(trash.getId())
-                        .addPathSegment("pick-up")
-                        .build()
+                    .url(
+                        this.pickUpBuilder(trash.getId())
+                            .build()
                     )
                     .build();
-                //todo re-add remove from backend
-//                try {
-//                    Response response = client.newCall(request).execute();
-//
-//                    if(response.code() != 204) {
-//                        throw new RuntimeException("PICKUP IS NOT A 204 RESPONSE CODE.");
-//                    }
+                try {
+                    Response response = client.newCall(request).execute();
+
+                    if (response.code() != 204) {
+                        throw new CompletionException(
+                            new Exception("PICKUP IS NOT A 204 RESPONSE CODE.")
+                        );
+                    }
+
                     this.setTrashState(
                         trash,
                         TrashState.PENDING_PICK_UP_CONFIRMED
@@ -271,6 +277,9 @@ public class FirebaseTrashService implements TrashService, EventListener<QuerySn
                     this.pickedUpListeners.forEach(
                         listener -> listener.pickedUp(trash)
                     );
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
             }
         );
     }
