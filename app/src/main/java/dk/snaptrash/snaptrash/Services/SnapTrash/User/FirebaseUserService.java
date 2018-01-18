@@ -4,19 +4,14 @@ package dk.snaptrash.snaptrash.Services.SnapTrash.User;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.UploadTask;
-import com.google.maps.android.MarkerManager;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,10 +23,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import dk.snaptrash.snaptrash.Models.User;
 import dk.snaptrash.snaptrash.Utils.TaskWrapper;
@@ -78,15 +69,14 @@ public class FirebaseUserService implements UserService {
     public CompletableFuture<User> create(String name, String email, String password, Uri profilePic) {
         return TaskWrapper.wrapAsync(FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password))
             .thenApplyAsync(authResult -> {
-                UploadTask.TaskSnapshot taskSnapshot;
+                UploadTask.TaskSnapshot taskSnapshot = null;
                 try {
                      taskSnapshot = TaskWrapper.wrapAsync(storage.getReference().child(authResult.getUser().getUid()).putFile(profilePic)).get();
                 } catch (InterruptedException|ExecutionException e) {
-                    throw new CompletionException(e);
                 }
                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                     .setDisplayName(name)
-                    .setPhotoUri(taskSnapshot.getDownloadUrl())
+                    .setPhotoUri(taskSnapshot == null ? null : taskSnapshot.getDownloadUrl())
                     .build();
 
                 try {

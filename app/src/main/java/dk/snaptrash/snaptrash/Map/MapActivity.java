@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -76,7 +77,6 @@ public class MapActivity
     @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
     public static GoogleApiClient googleApiClient;
-    private LocationRequest locationRequest;
     private Drawer leftSideMenu;
     private TextView leftSideMenuButton;
     @Inject
@@ -87,7 +87,7 @@ public class MapActivity
     RouteService routeService;
     @Getter
     private TrashMarkerMap trashMarkerMap;
-    private Location anchhor;
+    private Location anchor;
     private ImageButton hasRouteButton;
 
     @Nullable
@@ -103,6 +103,7 @@ public class MapActivity
     private static final int SIGN_OUT = 6;
     private static final int CREDITS = 7;
     private MapFragment mapFragment;
+    private boolean hasAskedForEnablingGPS = false;
 
     public MapActivity() {
     }
@@ -193,6 +194,37 @@ public class MapActivity
             .addApi(LocationServices.API)
             .build();
         googleApiClient.connect();
+
+        enableGPS();
+    }
+
+    private void enableGPS() {
+        try {
+            if(Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE) == 0){
+                hasAskedForEnablingGPS = true;
+                Intent onGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                Toast.makeText(this, "SnapTrash needs GPS enabled, please enable it.", Toast.LENGTH_LONG).show();
+                startActivity(onGPS);
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            Log.e("Setting", "settings not found", e);
+            this.signOut("Unknown GPS error, please contact developers.");
+        }
+    }
+
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.e("has asked GPS", String.valueOf(hasAskedForEnablingGPS));
+        try {
+            if(hasAskedForEnablingGPS && Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE) == 0) {
+                this.signOut("SnapTrash needs GPS enabled, please enable it.");
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            Log.e("Setting", "settings not found", e);
+            this.signOut("Unknown GPS error, please contact developers.");
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -236,6 +268,8 @@ public class MapActivity
             if (grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 this.onPermissionGranted();
+            } else {
+                this.signOut("Location permission is required.");
             }
         }
     }
@@ -259,10 +293,10 @@ public class MapActivity
     @SuppressLint("MissingPermission")
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        locationRequest = new LocationRequest()
-                .setInterval(5000)
-                .setFastestInterval(500)
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationRequest locationRequest = new LocationRequest()
+            .setInterval(5000)
+            .setFastestInterval(500)
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationServices.FusedLocationApi.requestLocationUpdates(
             googleApiClient, locationRequest, this);
     }
@@ -294,9 +328,9 @@ public class MapActivity
                 new LatLng(location.getLatitude(), location.getLongitude())
             ));
         }
-        if (this.anchhor == null || this.anchhor.distanceTo(location) >= 100) {
+        if (this.anchor == null || this.anchor.distanceTo(location) >= 100) {
             Log.e("mapactivity", "new anchor");
-            this.anchhor = location;
+            this.anchor = location;
 //            this.trashService.trashes();
         }
         if (this.route != null) {
@@ -358,10 +392,7 @@ public class MapActivity
                 new RouteDialog().setListener(this).show(getFragmentManager(), "RouteDialog");
                 break;
             case SIGN_OUT:
-                this.auth.signOut();
-                this.startActivity(
-                    new Intent(this, LoginActivity.class)
-                );
+                signOut("Signed out successfully!");
                 break;
             case STORE:
                 Toast.makeText(this, "Store not yet implemented.", Toast.LENGTH_SHORT).show();
@@ -383,6 +414,14 @@ public class MapActivity
         }
         this.leftSideMenu.deselect();
         return false;
+    }
+
+    private void signOut(String message) {
+        this.auth.signOut();
+        Toast.makeText(this, message , Toast.LENGTH_LONG).show();
+        this.startActivity(
+            new Intent(this, LoginActivity.class)
+        );
     }
 
     @Override

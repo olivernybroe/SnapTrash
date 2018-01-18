@@ -30,7 +30,7 @@ import static com.otaliastudios.cameraview.CameraView.PERMISSION_REQUEST_CODE;
 public class PickUpRecordingFragment extends Fragment implements View.OnClickListener {
 
     public interface OnVideoTakenListener {
-        public void videoTaken(File video);
+        void videoTaken(File video);
     }
 
     private Set<OnVideoTakenListener> listeners = Collections.synchronizedSet(

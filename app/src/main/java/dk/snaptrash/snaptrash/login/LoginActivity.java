@@ -70,8 +70,6 @@ implements
                             if (throwable == null) {
                                 this.goToMap();
                             } else {
-                                Toast.makeText(this, "Invalid saved credentials", Toast.LENGTH_SHORT)
-                                    .show();
                                 this.openSignIn();
                             }
                         }

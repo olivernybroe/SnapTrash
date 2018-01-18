@@ -38,7 +38,7 @@ implements
 {
 
     public interface OnUserInitiatesPickUpListener {
-        public void userInitiatesPickUp(Trash trash);
+        void userInitiatesPickUp(Trash trash);
     }
 
     private static final String trashParameter = "TRASH";
