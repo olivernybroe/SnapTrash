@@ -26,6 +26,8 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
     private ProgressBar progressBar;
     private Button signInButton;
     private TextView signUp;
+    private TextView username;
+    private TextView password;
 
     @Inject
     AuthProvider auth;
@@ -58,6 +60,8 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
         this.signInButton = view.findViewById(R.id.logIn);
         this.progressBar = view.findViewById(R.id.loading);
         this.signUp = view.findViewById(R.id.signUp);
+        this.username = view.findViewById(R.id.userName);
+        this.password = view.findViewById(R.id.password);
 
         this.signInButton.setOnClickListener(this);
         this.signUp.setOnClickListener(this);
@@ -81,8 +85,8 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
         if(view == signInButton) {
             this.working();
             ((AuthenticationActivity) this.getActivity()).login(
-                "hotshit@xd.ng",
-                ":)))))"
+                username.getText().toString(),
+                password.getText().toString()
             ).whenCompleteAsync((user, throwable) -> {
                 this.getActivity().runOnUiThread(
                     () -> {

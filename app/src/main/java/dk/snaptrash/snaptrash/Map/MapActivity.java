@@ -3,6 +3,7 @@ package dk.snaptrash.snaptrash.Map;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -64,26 +65,33 @@ import lombok.Getter;
 
 public class MapActivity
     extends Activity
-implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+    implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener,
     GoogleMap.OnMarkerClickListener, AccountHeader.OnAccountHeaderProfileImageListener,
     Drawer.OnDrawerItemClickListener, RouteDialog.Listener {
 
+    private static final int REQUEST_LOCATION = 3004;
     private GoogleMap googleMap;
 
-    @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
+    @Inject
+    DispatchingAndroidInjector<Fragment> fragmentInjector;
     public static GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
     private Drawer leftSideMenu;
     private TextView leftSideMenuButton;
-    @Inject AuthProvider auth;
-    @Inject TrashService trashService;
-    @Inject RouteService routeService;
-    @Getter private TrashMapMap trashMarkerMap;
+    @Inject
+    AuthProvider auth;
+    @Inject
+    TrashService trashService;
+    @Inject
+    RouteService routeService;
+    @Getter
+    private TrashMapMap trashMarkerMap;
     private Location anchhor;
     private ImageButton hasRouteButton;
 
-    @Nullable private MapRoute route;
+    @Nullable
+    private MapRoute route;
 
     private boolean hasSetFirstPosition = false;
 
@@ -93,6 +101,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
     private static final int SETTINGS = 4;
     private static final int HELP = 5;
     private static final int SIGN_OUT = 6;
+    private static final int CREDITS = 7;
+    private MapFragment mapFragment;
 
     public MapActivity() {
     }
@@ -113,14 +123,7 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
 
         Log.e("AUTH", auth.toString());
 
-        // Create the Google Api Client with location services.
-        googleApiClient = new GoogleApiClient.Builder(this)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .addApi(LocationServices.API)
-            .build();
-
-        if(!this.auth.loggedIn()) {
+        if (!this.auth.loggedIn()) {
             Log.e("Authentication", "Not logged in!");
             Intent intent = new Intent(this, LoginActivity.class);
             Bundle extras = new Bundle();
@@ -129,8 +132,21 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             return;
         }
 
-        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+
+
+        if (
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                REQUEST_LOCATION
+            );
+        }else {
+            onPermissionGranted();
+        }
 
         this.leftSideMenu = new DrawerBuilder()
             .withActivity(this)
@@ -142,7 +158,8 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
                 new DividerDrawerItem(),
                 new PrimaryDrawerItem().withName(R.string.menu_settings_title).withIcon(R.drawable.menu_settings_logo).withIdentifier(SETTINGS),
                 new PrimaryDrawerItem().withName(R.string.menu_sign_out_title).withIcon(R.drawable.menu_logout_logo).withIdentifier(SIGN_OUT),
-                new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP)
+                new PrimaryDrawerItem().withName(R.string.menu_help_title).withIcon(R.drawable.menu_help_logo).withIdentifier(HELP),
+                new PrimaryDrawerItem().withName(R.string.menu_credits_title).withIcon(R.drawable.menu_credits_logo).withIdentifier(CREDITS)
             )
             .withAccountHeader(new AccountHeaderBuilder()
                 .withSelectionListEnabled(false)
@@ -167,12 +184,23 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         this.leftSideMenuButton.setOnClickListener(this);
     }
 
+    private void onPermissionGranted() {
+        mapFragment.getMapAsync(this);
+        // Create the Google Api Client with location services.
+        googleApiClient = new GoogleApiClient.Builder(this)
+            .addConnectionCallbacks(this)
+            .addOnConnectionFailedListener(this)
+            .addApi(LocationServices.API)
+            .build();
+        googleApiClient.connect();
+    }
+
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setCompassEnabled(false);
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        googleMap.setMaxZoomPreference(40);
+        googleMap.setMaxZoomPreference(60);
         googleMap.setMinZoomPreference(20);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
         googleMap.setOnMarkerClickListener(this);
@@ -204,46 +232,33 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         @NonNull String permissions[],
         @NonNull int[] grantResults
     ) {
-        this.onMapReady(googleMap);
-        if (
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-        ) {
-            return;
+        if(requestCode == REQUEST_LOCATION) {
+            if (grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                this.onPermissionGranted();
+            }
         }
-        this.onLocationChanged(LocationServices.FusedLocationApi.getLastLocation(googleApiClient));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        googleApiClient.connect();
+        if(googleApiClient != null) {
+            googleApiClient.connect();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        googleApiClient.disconnect();
+        if(googleApiClient != null) {
+            googleApiClient.disconnect();
+        }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if (
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED)
-        {
-            ActivityCompat.requestPermissions(
-                this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                1000
-            );
-            return;
-        }
-
         locationRequest = new LocationRequest()
                 .setInterval(5000)
                 .setFastestInterval(500)
@@ -360,6 +375,11 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
             case HELP:
                 Toast.makeText(this, "Help & feedback not yet implemented.", Toast.LENGTH_SHORT).show();
                 break;
+            case CREDITS:
+                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                alertDialog.setTitle("Credits");
+                alertDialog.setMessage("Created by: \n Carl-Emil Hjort-trærup \n Oliver Nybroe");
+                alertDialog.show();
         }
         this.leftSideMenu.deselect();
         return false;
@@ -375,22 +395,6 @@ implements HasFragmentInjector, OnMapReadyCallback, GoogleApiClient.ConnectionCa
         Log.e("mapaktivity", "backpressed");
         this.finishAffinity();
     }
-
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == PickUpActivity.PICK_UP_CODE) {
-//            if (resultCode == Activity.RESULT_OK) {
-//                Bundle extras = data.getExtras();
-//                if (extras != null) {
-//                    Trash trash = (Trash) extras.getSerializable(PickUpActivity.trashParameter);
-//                    if (trash != null) {
-//                        this.trashMarkerMap.getMarker(trash).setVisible(false);
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     @SuppressLint("MissingPermission")
     private void setRoute(Route route) {
