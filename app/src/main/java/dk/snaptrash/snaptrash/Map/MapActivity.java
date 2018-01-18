@@ -86,7 +86,7 @@ public class MapActivity
     @Inject
     RouteService routeService;
     @Getter
-    private TrashMapMap trashMarkerMap;
+    private TrashMarkerMap trashMarkerMap;
     private Location anchhor;
     private ImageButton hasRouteButton;
 
