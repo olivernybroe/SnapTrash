@@ -85,7 +85,7 @@ public class LogInFragment extends Fragment implements View.OnClickListener {
         if(view == signInButton) {
             this.working();
             ((AuthenticationActivity) this.getActivity()).login(
-                username.getText().toString(),
+                username.getText().toString().trim(),
                 password.getText().toString()
             ).whenCompleteAsync((user, throwable) -> {
                 this.getActivity().runOnUiThread(
